@@ -36,3 +36,9 @@ app.get("/auth/logout", async (req, res) => {
     await getSupabaseClient().auth.signOut();
     req.session.destroy(() => res.redirect("/"));
 });
+
+app.get("/auth/discord/addbot", async (req, res) => {
+    res.redirect(
+        `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}`,
+    );
+});

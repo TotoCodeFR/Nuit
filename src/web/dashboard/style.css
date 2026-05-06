@@ -66,3 +66,34 @@ div.guild > img.icon {
     height: 64px;
     border-radius: 100%;
 }
+
+#guildList > a.add-bot {
+    background-color: var(--accent-800 / 0.15);
+    border-radius: 8px;
+    border: 2px dashed var(--accent-600 / 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-accent);
+    transition:
+        background-color 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+        border-color 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+        transform 0.2s ease;
+}
+
+#guildList > a.add-bot:hover {
+    background-color: var(--accent-800 / 0.25);
+    border-color: var(--accent-400);
+    transform: translateY(-2px);
+}
+
+#guildList > a.add-bot svg.plus-icon {
+    width: 32px;
+    height: 32px;
+    stroke-width: 2.5;
+    flex-shrink: 0;
+}
