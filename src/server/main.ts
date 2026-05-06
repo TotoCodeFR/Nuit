@@ -1,9 +1,23 @@
 import chalk from "chalk";
 import express from "express";
+import helmet from "helmet";
 import path from "node:path";
 import session from "express-session";
 
 export const app = express();
+
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                "img-src": ["'self'", "data:", "https://cdn.discordapp.com"],
+                "font-src": ["'self'", "https://fonts.gstatic.com"],
+                "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            },
+        },
+    }),
+);
 
 app.use(
     session({

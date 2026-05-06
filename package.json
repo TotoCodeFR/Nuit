@@ -19,6 +19,7 @@
         "discord.js": "^14.26.3",
         "express": "^5.2.1",
         "express-session": "^1.19.0",
+        "helmet": "^8.1.0",
         "toml": "^4.1.1"
     },
     "scripts": {

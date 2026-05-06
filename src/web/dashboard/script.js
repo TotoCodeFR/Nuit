@@ -56,7 +56,7 @@ async function load() {
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <h3 class="name">Add the bot to your server</h3>
+        <h3 class="name">Add Nuit to your server</h3>
     `
     guildList.appendChild(addBotBtn)
 
