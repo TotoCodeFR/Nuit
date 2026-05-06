@@ -1,9 +1,14 @@
 import type { NextFunction, Request, Response } from "express";
 import { app } from "./main";
 import type { User } from "@supabase/supabase-js";
+import type { Json } from "@nuit-bot/api";
 import path from "node:path";
 import { PermissionsBitField } from "discord.js";
 import { client } from "../discord/main";
+import {
+    globalRegistry,
+    guildModulesCache,
+} from "../discord/utility/moduleLoader";
 import { TtlCache } from "../utility/cache";
 import { getSupabaseClient } from "../utility/supabase";
 
@@ -18,6 +23,98 @@ export interface DiscordRESTGuild {
 
 export const mutualGuildsCache = new TtlCache<string, []>(90_000);
 export const guildCache = new TtlCache<string, object>(90_000);
+
+const supabase = getSupabaseClient();
+
+function getModuleSchema(moduleId: string) {
+    return globalRegistry.config.filter((field) => field.module === moduleId);
+}
+
+function getAllModuleIds() {
+    return Array.from(
+        new Set([
+            ...globalRegistry.commands.map((command) => command.module),
+            ...globalRegistry.events.map((event) => event.module),
+            ...globalRegistry.config.map((field) => field.module),
+        ]),
+    );
+}
+
+function formatModuleName(moduleId: string) {
+    return (
+        moduleId
+            .split("/")
+            .at(-1)
+            ?.replace(/^module-/, "")
+            .split("-")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ") ?? moduleId
+    );
+}
+
+function getModuleKind(moduleId: string) {
+    return (
+        globalRegistry.commands.find((command) => command.module === moduleId)
+            ?.kind ?? null
+    );
+}
+
+function moduleExists(moduleId: string) {
+    return (
+        globalRegistry.config.some((field) => field.module === moduleId) ||
+        globalRegistry.commands.some(
+            (command) => command.module === moduleId,
+        ) ||
+        globalRegistry.events.some((event) => event.module === moduleId)
+    );
+}
+
+function isJsonObject(value: Json | undefined): value is Record<string, Json> {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+async function getGuildModulesOverview(guildId: string) {
+    let storedModules = guildModulesCache.get(guildId);
+
+    if (!storedModules) {
+        const { data, error } = await supabase
+            .from("guild_modules")
+            .select("*")
+            .eq("guild_id", guildId);
+
+        if (error) {
+            throw error;
+        }
+
+        storedModules = data ?? [];
+        guildModulesCache.set(guildId, storedModules);
+    }
+
+    return getAllModuleIds()
+        .filter((moduleId) => getModuleKind(moduleId) !== "internal")
+        .map((moduleId) => {
+            const stored = storedModules.find(
+                (entry) => entry.module_id === moduleId,
+            );
+            const fields = getModuleSchema(moduleId);
+
+            return {
+                id: moduleId,
+                name: formatModuleName(moduleId),
+                kind: getModuleKind(moduleId),
+                enabled: stored?.enabled ?? false,
+                configurable: fields.length > 0,
+                commandCount: globalRegistry.commands.filter(
+                    (command) => command.module === moduleId,
+                ).length,
+                eventCount: globalRegistry.events.filter(
+                    (event) => event.module === moduleId,
+                ).length,
+                fieldCount: fields.length,
+                updatedAt: stored?.updated_at ?? null,
+            };
+        });
+}
 
 export async function getMutualGuilds(providerToken: string, userId: string) {
     let guilds;
@@ -69,7 +166,7 @@ export async function hasAccess(
     next: NextFunction,
 ) {
     const guildId = req.params.guildId;
-    if (!guildId) throw new Error("Missing guild ID");
+    if (typeof guildId !== "string") throw new Error("Missing guild ID");
 
     const mutual = await getMutualGuilds(
         req.session.supabaseSession?.provider_token as string,
@@ -83,11 +180,159 @@ export async function hasAccess(
     }
 }
 
-app.get("/dashboard/:guildId/:module", requireAuth, (req, res) => {
+app.get("/dashboard/:guildId/overview", requireAuth, hasAccess, (req, res) => {
+    res.sendFile(
+        path.join(import.meta.dirname, "..", "web", "overview", "index.html"),
+    );
+});
+
+app.get("/dashboard/:guildId/:module", requireAuth, hasAccess, (req, res) => {
     res.sendFile(
         path.join(import.meta.dirname, "..", "web", "config", "index.html"),
     );
 });
+
+app.get(
+    "/api/guild/:guildId/:module/config",
+    requireAuth,
+    hasAccess,
+    async (req, res) => {
+        const { guildId, module: moduleId } = req.params;
+
+        if (typeof guildId !== "string" || typeof moduleId !== "string") {
+            return res.status(400).json({ error: "Missing route params" });
+        }
+
+        if (!moduleExists(moduleId)) {
+            return res.status(404).json({ error: "Unknown module" });
+        }
+
+        const schema = getModuleSchema(moduleId);
+
+        const { data, error } = await supabase
+            .from("guild_modules")
+            .select("config, enabled, updated_at")
+            .eq("guild_id", guildId)
+            .eq("module_id", moduleId)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Failed to fetch module config", error);
+            return res
+                .status(500)
+                .json({ error: "Failed to fetch module config" });
+        }
+
+        res.json({
+            guildId,
+            module: moduleId,
+            schema,
+            enabled: data?.enabled ?? false,
+            config: isJsonObject(data?.config) ? data.config : {},
+            updatedAt: data?.updated_at ?? null,
+        });
+    },
+);
+
+app.put(
+    "/api/guild/:guildId/:module/config",
+    requireAuth,
+    hasAccess,
+    async (
+        req: Request<
+            { guildId: string; module: string },
+            any,
+            { config?: Json }
+        >,
+        res,
+    ) => {
+        const { guildId, module: moduleId } = req.params;
+        const nextConfig = req.body?.config;
+
+        if (typeof guildId !== "string" || typeof moduleId !== "string") {
+            return res.status(400).json({ error: "Missing route params" });
+        }
+
+        if (!moduleExists(moduleId)) {
+            return res.status(404).json({ error: "Unknown module" });
+        }
+
+        if (!isJsonObject(nextConfig)) {
+            return res.status(400).json({
+                error: "Expected body shape { config: { ... } }",
+            });
+        }
+
+        const { data: existing, error: existingError } = await supabase
+            .from("guild_modules")
+            .select("enabled")
+            .eq("guild_id", guildId)
+            .eq("module_id", moduleId)
+            .maybeSingle();
+
+        if (existingError) {
+            console.error("Failed to read current module state", existingError);
+            return res
+                .status(500)
+                .json({ error: "Failed to update module config" });
+        }
+
+        const { data, error } = await supabase
+            .from("guild_modules")
+            .upsert(
+                {
+                    guild_id: guildId,
+                    module_id: moduleId,
+                    config: nextConfig,
+                    enabled: existing?.enabled ?? false,
+                },
+                { onConflict: "guild_id,module_id" },
+            )
+            .select("config, enabled, updated_at")
+            .single();
+
+        if (error) {
+            console.error("Failed to update module config", error);
+            return res
+                .status(500)
+                .json({ error: "Failed to update module config" });
+        }
+
+        guildModulesCache.delete(guildId);
+
+        res.json({
+            guildId,
+            module: moduleId,
+            schema: getModuleSchema(moduleId),
+            enabled: data.enabled,
+            config: isJsonObject(data.config) ? data.config : {},
+            updatedAt: data.updated_at,
+        });
+    },
+);
+
+app.get(
+    "/api/guild/:guildId/modules",
+    requireAuth,
+    hasAccess,
+    async (req, res) => {
+        const { guildId } = req.params;
+
+        if (typeof guildId !== "string") {
+            return res.status(400).json({ error: "Missing route params" });
+        }
+
+        try {
+            const modules = await getGuildModulesOverview(guildId);
+            return res.json(modules);
+        } catch (error) {
+            console.error("Failed to fetch guild modules overview", error);
+            return res
+                .status(500)
+                .json({ error: "Failed to fetch guild modules" });
+        }
+    },
+);
 
 app.get("/api/users/@me", (req, res) => {
     if (!req.session.supabaseSession?.user) {
@@ -129,7 +374,7 @@ app.get("/api/guild/:guildId", requireAuth, hasAccess, async (req, res) => {
 
     const guild: any = (await client.guilds.fetch(guildId as string)).toJSON();
 
-    const guildConfig = await getSupabaseClient()
+    const guildConfig = await supabase
         .from("guilds")
         .select("config")
         .eq("guild_id", String(guildId))

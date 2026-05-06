@@ -1,19 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>- Nuit</title>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> - Nuit</title>
+        <link rel="stylesheet" href="/config/style.css" />
+    </head>
 
-    <link rel="stylesheet" href="/config/style.css">
-</head>
+    <body>
+        <div id="loading"></div>
+        <main>
+            <section class="hero">
+                <a class="back" href="/dashboard">Back to dashboard</a>
+                <p class="eyebrow">Module configuration</p>
+                <h1 id="title">Loading module...</h1>
+                <p id="subtitle" class="subtitle"></p>
+            </section>
 
-<body>
-    <div id="loading"></div>
-    <main></main>
+            <section class="panel summary">
+                <div>
+                    <p class="label">Module</p>
+                    <strong id="moduleName">-</strong>
+                </div>
+                <div>
+                    <p class="label">Status</p>
+                    <strong id="moduleStatus">-</strong>
+                </div>
+                <div>
+                    <p class="label">Last update</p>
+                    <strong id="updatedAt">-</strong>
+                </div>
+            </section>
 
-    <script src="/config/script.js"></script>
-</body>
+            <form id="configForm" class="panel form-panel">
+                <div class="form-header">
+                    <div>
+                        <h2>Settings</h2>
+                        <p id="formDescription" class="muted">
+                            Edit this module's guild-specific settings.
+                        </p>
+                    </div>
 
+                    <div class="actions">
+                        <span id="statusMessage" class="status-message"></span>
+                        <button type="submit" id="saveButton">
+                            Save changes
+                        </button>
+                    </div>
+                </div>
+
+                <div id="configFields" class="field-groups"></div>
+            </form>
+        </main>
+
+        <script src="/config/script.js"></script>
+    </body>
 </html>

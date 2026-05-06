@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Guild overview - Nuit</title>
+
+        <link rel="stylesheet" href="/overview/style.css" />
+    </head>
+
+    <body>
+        <div id="loading"></div>
+        <main>
+            <section class="hero">
+                <a class="back" href="/dashboard">Back to dashboard</a>
+                <p class="eyebrow">Guild overview</p>
+                <h1 id="guildName">Loading guild...</h1>
+                <p id="guildMeta" class="subtitle"></p>
+            </section>
+
+            <section class="stats" id="stats"></section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Modules</h2>
+                        <p class="subtitle">
+                            Manage installed modules for this guild.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="moduleList" class="module-list"></div>
+            </section>
+        </main>
+
+        <script src="/overview/script.js"></script>
+    </body>
+</html>

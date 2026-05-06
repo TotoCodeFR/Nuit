@@ -15,6 +15,19 @@ import { cleanMultiline } from "../../discord/utility/cleanMultiline";
 import type { ModuleContext } from "@nuit-bot/api";
 
 export async function setup(ctx: ModuleContext) {
+    ctx.api.registerConfig([
+        {
+            key: "test_setting",
+            label: "Test setting",
+            description: "Temporary moderation module test setting.",
+            group: "Testing",
+            type: "string",
+            default: "test",
+            optional: true,
+            max: 120,
+        },
+    ]);
+
     await ctx.api.registerCommand({
         data: new SlashCommandBuilder()
             .setName("ban")

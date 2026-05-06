@@ -34,6 +34,7 @@ export const guildAvailableCache = new TtlCache<string, boolean>(60_000);
 export const globalRegistry: ModuleRegistry = {
     commands: [],
     events: [],
+    config: [],
 };
 
 export async function getPackageJSON(path: string) {
@@ -55,6 +56,28 @@ export async function getPackageJSON(path: string) {
             err,
         );
     }
+}
+
+export function applyConfigs(registry: ModuleRegistry) {
+    registry.config.forEach((field) => {
+        if (!field.key || !field.label || !field.type || !field.module) {
+            return console.warn(
+                cleanMultiline(
+                    `Config field from ${field.module ?? "unknown module"} is missing required values.
+                    ${chalk.green("Fix")}: Add the "key", "label", "type", and module-backed registration values.
+                    ${chalk.gray(
+                        cleanMultiline(`Details:
+                                        - Key: ${field.key ?? "missing"}
+                                        - Label: ${field.label ?? "missing"}
+                                        - Type: ${field.type ?? "missing"}
+                                        - Module name: ${field.module ?? "missing"}`),
+                    )}`,
+                ),
+            );
+        }
+
+        globalRegistry.config.push(field);
+    });
 }
 
 export function applyCommands(registry: ModuleRegistry) {
@@ -121,6 +144,7 @@ export async function loadModule(
         const registry: ModuleRegistry = {
             commands: [],
             events: [],
+            config: [],
         };
 
         const ctx: ModuleContext = {
@@ -132,6 +156,7 @@ export async function loadModule(
 
         await mod.setup(ctx);
 
+        applyConfigs(registry);
         applyCommands(registry);
         applyEvents(registry);
     } catch (err) {

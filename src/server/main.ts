@@ -14,6 +14,8 @@ app.use(
     }),
 );
 
+app.use(express.json());
+
 app.use(express.static(path.join(import.meta.dirname, "..", "web")));
 
 app.listen(process.env.PORT || 8080, async () => {
