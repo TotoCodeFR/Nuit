@@ -311,6 +311,66 @@ app.put(
     },
 );
 
+app.put(
+    "/api/guild/:guildId/:module/enabled",
+    requireAuth,
+    hasAccess,
+    async (
+        req: Request<{ guildId: string; module: string }, any, { enabled: boolean }>,
+        res,
+    ) => {
+        const { guildId, module: moduleId } = req.params;
+        const { enabled } = req.body;
+
+        if (typeof guildId !== "string" || typeof moduleId !== "string") {
+            return res.status(400).json({ error: "Missing route params" });
+        }
+
+        if (!moduleExists(moduleId)) {
+            return res.status(404).json({ error: "Unknown module" });
+        }
+
+        if (typeof enabled !== "boolean") {
+            return res.status(400).json({ error: "Expected body shape { enabled: boolean }" });
+        }
+
+        const { data: existing, error: existingError } = await supabase
+            .from("guild_modules")
+            .select("config")
+            .eq("guild_id", guildId)
+            .eq("module_id", moduleId)
+            .maybeSingle();
+
+        if (existingError) {
+            console.error("Failed to read current module state", existingError);
+            return res.status(500).json({ error: "Failed to update module status" });
+        }
+
+        const { data, error } = await supabase
+            .from("guild_modules")
+            .upsert(
+                {
+                    guild_id: guildId,
+                    module_id: moduleId,
+                    enabled,
+                    config: existing?.config ?? {},
+                },
+                { onConflict: "guild_id,module_id" },
+            )
+            .select("enabled, updated_at")
+            .single();
+
+        if (error) {
+            console.error("Failed to update module status", error);
+            return res.status(500).json({ error: "Failed to update module status" });
+        }
+
+        guildModulesCache.delete(guildId);
+
+        res.json({ guildId, module: moduleId, enabled: data.enabled, updatedAt: data.updated_at });
+    },
+);
+
 app.get(
     "/api/guild/:guildId/modules",
     requireAuth,

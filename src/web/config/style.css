@@ -96,8 +96,15 @@ textarea {
 .summary {
     display: grid;
     gap: 16px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    align-items: end;
     padding: 20px;
+}
+
+.summary-toggle {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
 }
 
 .summary strong,

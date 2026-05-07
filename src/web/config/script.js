@@ -14,6 +14,7 @@ const fieldsContainer = document.querySelector("#configFields");
 const formElement = document.querySelector("#configForm");
 const statusMessageElement = document.querySelector("#statusMessage");
 const saveButton = document.querySelector("#saveButton");
+const toggleButton = document.querySelector("#toggleButton");
 const backLinkElement = document.querySelector(".back");
 
 function setLoading(isLoading) {
@@ -215,6 +216,8 @@ function updateSummary() {
         ? "Enabled"
         : "Disabled";
     updatedAtElement.textContent = formatDate(moduleData.updatedAt);
+    toggleButton.textContent = moduleData.enabled ? "Disable" : "Enable";
+    toggleButton.disabled = false;
 }
 
 function collectConfig() {
@@ -328,3 +331,33 @@ formElement.addEventListener("submit", async (event) => {
 });
 
 load();
+
+toggleButton.addEventListener("click", async () => {
+    toggleButton.disabled = true;
+    setStatus(moduleData.enabled ? "Disabling..." : "Enabling...");
+
+    try {
+        const res = await fetch(
+            `/api/guild/${guildId}/${encodeURIComponent(module)}/enabled`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ enabled: !moduleData.enabled }),
+            },
+        );
+
+        if (!res.ok) {
+            throw new Error(`Toggle failed with status ${res.status}`);
+        }
+
+        const result = await res.json();
+        moduleData.enabled = result.enabled;
+        moduleData.updatedAt = result.updatedAt;
+        updateSummary();
+        setStatus(result.enabled ? "Module enabled" : "Module disabled", "success");
+    } catch (err) {
+        console.error("Failed to toggle module", err);
+        setStatus("Failed to toggle module", "error");
+        toggleButton.disabled = false;
+    }
+});
