@@ -27,8 +27,6 @@ async function load() {
         }
 
         commonGuilds = await res.json();
-
-        console.log(commonGuilds)
     } catch (err) {
         console.error("Something went wrong while fetching common servers", err)
     }
