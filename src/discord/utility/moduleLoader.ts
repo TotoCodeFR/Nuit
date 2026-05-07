@@ -1,6 +1,7 @@
 import {
     createAPI,
     type BaseCtx,
+    type Json,
     type ModuleContext,
     type ModuleRegistry,
     type NuitCommand,
@@ -13,12 +14,27 @@ import { join } from "path";
 import { Events, MessageFlags, REST, Routes } from "discord.js";
 import { cleanMultiline } from "./cleanMultiline";
 import chalk from "chalk";
+import { TtlCache } from "../../utility/cache";
 
 const supabase = getSupabaseClient();
+
+export const guildModulesCache = new TtlCache<
+    string,
+    {
+        config: Json;
+        enabled: boolean;
+        guild_id: string;
+        module_id: string;
+        updated_at: string;
+    }[]
+>(60_000);
+
+export const guildAvailableCache = new TtlCache<string, boolean>(60_000);
 
 export const globalRegistry: ModuleRegistry = {
     commands: [],
     events: [],
+    config: [],
 };
 
 export async function getPackageJSON(path: string) {
@@ -40,6 +56,28 @@ export async function getPackageJSON(path: string) {
             err,
         );
     }
+}
+
+export function applyConfigs(registry: ModuleRegistry) {
+    registry.config.forEach((field) => {
+        if (!field.key || !field.label || !field.type || !field.module) {
+            return console.warn(
+                cleanMultiline(
+                    `Config field from ${field.module ?? "unknown module"} is missing required values.
+                    ${chalk.green("Fix")}: Add the "key", "label", "type", and module-backed registration values.
+                    ${chalk.gray(
+                        cleanMultiline(`Details:
+                                        - Key: ${field.key ?? "missing"}
+                                        - Label: ${field.label ?? "missing"}
+                                        - Type: ${field.type ?? "missing"}
+                                        - Module name: ${field.module ?? "missing"}`),
+                    )}`,
+                ),
+            );
+        }
+
+        globalRegistry.config.push(field);
+    });
 }
 
 export function applyCommands(registry: ModuleRegistry) {
@@ -106,6 +144,7 @@ export async function loadModule(
         const registry: ModuleRegistry = {
             commands: [],
             events: [],
+            config: [],
         };
 
         const ctx: ModuleContext = {
@@ -117,6 +156,7 @@ export async function loadModule(
 
         await mod.setup(ctx);
 
+        applyConfigs(registry);
         applyCommands(registry);
         applyEvents(registry);
     } catch (err) {
@@ -126,6 +166,21 @@ export async function loadModule(
 }
 
 const getGuildId = (...args: any[]) => args[0]?.guildId ?? null;
+
+async function isGuildAvailable(guildId: string): Promise<boolean> {
+    const cached = guildAvailableCache.get(guildId);
+    if (cached !== undefined) return cached;
+
+    const { data } = await supabase
+        .from("guilds")
+        .select("available")
+        .eq("guild_id", guildId)
+        .single();
+
+    const available = data?.available === true;
+    guildAvailableCache.set(guildId, available);
+    return available;
+}
 
 export async function setupCommandsAndEvents() {
     globalRegistry.events.forEach((event) => {
@@ -143,14 +198,22 @@ export async function setupCommandsAndEvents() {
                     );
                 }
 
-                const { data: enabledModules } = (await supabase
-                    .from("guild_modules")
-                    .select("*")
-                    .eq("guild_id", String(guildId))
-                    .eq("module_id", event.module)
-                    .single()) as { data: { enabled: boolean } | null };
+                if (!(await isGuildAvailable(guildId))) return;
 
-                if (!enabledModules?.enabled) return;
+                let modules = guildModulesCache.get(guildId);
+
+                if (!modules) {
+                    const { data } = await supabase
+                        .from("guild_modules")
+                        .select("*")
+                        .eq("guild_id", String(guildId));
+
+                    modules = data ?? [];
+                    guildModulesCache.set(guildId, modules);
+                }
+
+                const mod = modules?.find((m) => m.module_id === event.module);
+                if (!mod?.enabled) return;
             }
 
             await (event.handler as (...a: any[]) => Promise<void> | void)(
@@ -192,6 +255,8 @@ export async function setupCommandsAndEvents() {
                 -# Run a command in a guild where I'm present!`),
             });
         }
+
+        if (!(await isGuildAvailable(guildId))) return;
 
         const { data: enabledModules } = (await supabase
             .from("guild_modules")
