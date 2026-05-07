@@ -341,7 +341,7 @@ app.get("/api/users/@me", (req, res) => {
     res.json(userToDiscord(req.session.supabaseSession?.user!));
 });
 
-app.get("/api/guilds/common", async (req, res) => {
+app.get("/api/guilds/common", requireAuth, async (req, res) => {
     if (!req.session.supabaseSession?.user) {
         return res.status(401).send("Unauthorized");
     }
