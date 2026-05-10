@@ -15,17 +15,20 @@ import { Events, MessageFlags, REST, Routes } from "discord.js";
 import { cleanMultiline } from "./cleanMultiline";
 import chalk from "chalk";
 import { TtlCache } from "../../utility/cache";
+import { db } from "../../db/main";
+import { guild_modules, guilds } from "../../db/schema";
+import { and, eq } from "drizzle-orm";
 
 const supabase = getSupabaseClient();
 
 export const guildModulesCache = new TtlCache<
     string,
     {
-        config: Json;
-        enabled: boolean;
+        config: Json | null;
+        enabled: boolean | null;
         guild_id: string;
         module_id: string;
-        updated_at: string;
+        updated_at: Date | null;
     }[]
 >(60_000);
 
@@ -171,11 +174,11 @@ async function isGuildAvailable(guildId: string): Promise<boolean> {
     const cached = guildAvailableCache.get(guildId);
     if (cached !== undefined) return cached;
 
-    const { data } = await supabase
-        .from("guilds")
-        .select("available")
-        .eq("guild_id", guildId)
-        .single();
+    const [data] = await db
+        .select({ available: guilds.available })
+        .from(guilds)
+        .where(eq(guilds.guild_id, guildId))
+        .limit(1);
 
     const available = data?.available === true;
     guildAvailableCache.set(guildId, available);
@@ -203,16 +206,24 @@ export async function setupCommandsAndEvents() {
                 let modules = guildModulesCache.get(guildId);
 
                 if (!modules) {
-                    const { data } = await supabase
-                        .from("guild_modules")
-                        .select("*")
-                        .eq("guild_id", String(guildId));
-
-                    modules = data ?? [];
+                    const rows = await db
+                        .select({
+                            guild_id: guild_modules.guild_id,
+                            module_id: guild_modules.module_id,
+                            enabled: guild_modules.enabled,
+                            config: guild_modules.config,
+                            updated_at: guild_modules.updated_at,
+                        })
+                        .from(guild_modules)
+                        .where(eq(guild_modules.guild_id, String(guildId)));
+                    modules = rows.map((row) => ({
+                        ...row,
+                        config: (row.config as Json | null) ?? null,
+                    }));
                     guildModulesCache.set(guildId, modules);
                 }
 
-                const mod = modules?.find((m) => m.module_id === event.module);
+                const mod = modules.find((m) => m.module_id === event.module);
                 if (!mod?.enabled) return;
             }
 
@@ -258,12 +269,16 @@ export async function setupCommandsAndEvents() {
 
         if (!(await isGuildAvailable(guildId))) return;
 
-        const { data: enabledModules } = (await supabase
-            .from("guild_modules")
-            .select("*")
-            .eq("guild_id", guildId)
-            .eq("module_id", command.module)
-            .single()) as { data: { enabled: boolean } | null };
+        const [enabledModules] = await db
+            .select({ enabled: guild_modules.enabled })
+            .from(guild_modules)
+            .where(
+                and(
+                    eq(guild_modules.guild_id, guildId),
+                    eq(guild_modules.module_id, command.module),
+                ),
+            )
+            .limit(1);
 
         if (!enabledModules?.enabled) {
             if (!command.kind || command.kind === "optional") {

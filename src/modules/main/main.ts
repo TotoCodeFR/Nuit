@@ -8,8 +8,10 @@ import {
 import { cleanMultiline } from "../../discord/utility/cleanMultiline";
 import { randomInt } from "node:crypto";
 import chalk from "chalk";
-import { getSupabaseClient } from "../../utility/supabase";
 import { client } from "../../discord/main";
+import { db } from "../../db/main";
+import { guilds } from "../../db/schema";
+import { eq } from "drizzle-orm";
 
 const loadingPhrases = [
     "Bip boop, Nuit is here!",
@@ -25,8 +27,6 @@ const loadingPhrases = [
     "I'm awake, I'm awake...",
     "Loaded! Don't ask how long it took.",
 ];
-
-const supabase = getSupabaseClient();
 
 export async function setup(ctx: ModuleContext) {
     ctx.api.registerCommand({
@@ -60,27 +60,25 @@ export async function setup(ctx: ModuleContext) {
     );
 
     ctx.api.onEvent(Events.GuildCreate, async (guild) => {
-        const { error: guildInsertError } = await supabase
-            .from("guilds")
-            .insert({
+        try {
+            await db.insert(guilds).values({
                 guild_id: guild.id,
                 locale: guild.preferredLocale,
             });
-
-        if (guildInsertError) {
+        } catch (guildInsertError) {
             console.error("Error when adding guild", guildInsertError);
         }
     });
 
     ctx.api.onEvent(Events.GuildDelete, async (guild) => {
-        const { error: guildUpdateError } = await supabase
-            .from("guilds")
-            .update({
+        try {
+            await db
+                .update(guilds)
+                .set({
                 available: false,
-            })
-            .eq("guild_id", guild.id);
-
-        if (guildUpdateError) {
+                })
+                .where(eq(guilds.guild_id, guild.id));
+        } catch (guildUpdateError) {
             console.error("Error when updating guild", guildUpdateError);
         }
     });

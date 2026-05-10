@@ -10,7 +10,9 @@ import {
     guildModulesCache,
 } from "../discord/utility/moduleLoader";
 import { TtlCache } from "../utility/cache";
-import { getSupabaseClient } from "../utility/supabase";
+import { db } from "../db/main";
+import { guild_modules, guilds } from "../db/schema";
+import { and, eq } from "drizzle-orm";
 
 export interface DiscordRESTGuild {
     id: string;
@@ -23,8 +25,6 @@ export interface DiscordRESTGuild {
 
 export const mutualGuildsCache = new TtlCache<string, []>(90_000);
 export const guildCache = new TtlCache<string, object>(90_000);
-
-const supabase = getSupabaseClient();
 
 function getModuleSchema(moduleId: string) {
     return globalRegistry.config.filter((field) => field.module === moduleId);
@@ -77,16 +77,20 @@ async function getGuildModulesOverview(guildId: string) {
     let storedModules = guildModulesCache.get(guildId);
 
     if (!storedModules) {
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .select("*")
-            .eq("guild_id", guildId);
-
-        if (error) {
-            throw error;
-        }
-
-        storedModules = data ?? [];
+        const rows = await db
+            .select({
+                guild_id: guild_modules.guild_id,
+                module_id: guild_modules.module_id,
+                enabled: guild_modules.enabled,
+                config: guild_modules.config,
+                updated_at: guild_modules.updated_at,
+            })
+            .from(guild_modules)
+            .where(eq(guild_modules.guild_id, guildId));
+        storedModules = rows.map((row) => ({
+            ...row,
+            config: (row.config as Json | null) ?? null,
+        }));
         guildModulesCache.set(guildId, storedModules);
     }
 
@@ -209,28 +213,40 @@ app.get(
 
         const schema = getModuleSchema(moduleId);
 
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .select("config, enabled, updated_at")
-            .eq("guild_id", guildId)
-            .eq("module_id", moduleId)
-            .maybeSingle();
+        try {
+            const [data] = await db
+                .select({
+                    config: guild_modules.config,
+                    enabled: guild_modules.enabled,
+                    updated_at: guild_modules.updated_at,
+                })
+                .from(guild_modules)
+                .where(
+                    and(
+                        eq(guild_modules.guild_id, guildId),
+                        eq(guild_modules.module_id, moduleId),
+                    ),
+                )
+                .limit(1);
 
-        if (error) {
+            const config = data?.config as Json | undefined;
+
+            res.json({
+                guildId,
+                module: moduleId,
+                schema,
+                enabled: data?.enabled ?? false,
+                config: isJsonObject(config)
+                    ? (config as Record<string, Json>)
+                    : {},
+                updatedAt: data?.updated_at ?? null,
+            });
+        } catch (error) {
             console.error("Failed to fetch module config", error);
             return res
                 .status(500)
                 .json({ error: "Failed to fetch module config" });
         }
-
-        res.json({
-            guildId,
-            module: moduleId,
-            schema,
-            enabled: data?.enabled ?? false,
-            config: isJsonObject(data?.config) ? data.config : {},
-            updatedAt: data?.updated_at ?? null,
-        });
     },
 );
 
@@ -263,51 +279,64 @@ app.put(
             });
         }
 
-        const { data: existing, error: existingError } = await supabase
-            .from("guild_modules")
-            .select("enabled")
-            .eq("guild_id", guildId)
-            .eq("module_id", moduleId)
-            .maybeSingle();
+        try {
+            const [existing] = await db
+                .select({ enabled: guild_modules.enabled })
+                .from(guild_modules)
+                .where(
+                    and(
+                        eq(guild_modules.guild_id, guildId),
+                        eq(guild_modules.module_id, moduleId),
+                    ),
+                )
+                .limit(1);
 
-        if (existingError) {
-            console.error("Failed to read current module state", existingError);
-            return res
-                .status(500)
-                .json({ error: "Failed to update module config" });
-        }
-
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .upsert(
-                {
+            const [data] = await db
+                .insert(guild_modules)
+                .values({
                     guild_id: guildId,
                     module_id: moduleId,
                     config: nextConfig,
                     enabled: existing?.enabled ?? false,
-                },
-                { onConflict: "guild_id,module_id" },
-            )
-            .select("config, enabled, updated_at")
-            .single();
+                })
+                .onConflictDoUpdate({
+                    target: [guild_modules.guild_id, guild_modules.module_id],
+                    set: {
+                        config: nextConfig,
+                        enabled: existing?.enabled ?? false,
+                        updated_at: new Date(),
+                    },
+                })
+                .returning({
+                    config: guild_modules.config,
+                    enabled: guild_modules.enabled,
+                    updated_at: guild_modules.updated_at,
+                });
 
-        if (error) {
+            if (!data) {
+                throw new Error("Module config upsert returned no row");
+            }
+
+            const config = data.config as Json | undefined;
+
+            guildModulesCache.delete(guildId);
+
+            res.json({
+                guildId,
+                module: moduleId,
+                schema: getModuleSchema(moduleId),
+                enabled: data.enabled,
+                config: isJsonObject(config)
+                    ? (config as Record<string, Json>)
+                    : {},
+                updatedAt: data.updated_at,
+            });
+        } catch (error) {
             console.error("Failed to update module config", error);
             return res
                 .status(500)
                 .json({ error: "Failed to update module config" });
         }
-
-        guildModulesCache.delete(guildId);
-
-        res.json({
-            guildId,
-            module: moduleId,
-            schema: getModuleSchema(moduleId),
-            enabled: data.enabled,
-            config: isJsonObject(data.config) ? data.config : {},
-            updatedAt: data.updated_at,
-        });
     },
 );
 
@@ -334,40 +363,55 @@ app.put(
             return res.status(400).json({ error: "Expected body shape { enabled: boolean }" });
         }
 
-        const { data: existing, error: existingError } = await supabase
-            .from("guild_modules")
-            .select("config")
-            .eq("guild_id", guildId)
-            .eq("module_id", moduleId)
-            .maybeSingle();
+        try {
+            const [existing] = await db
+                .select({ config: guild_modules.config })
+                .from(guild_modules)
+                .where(
+                    and(
+                        eq(guild_modules.guild_id, guildId),
+                        eq(guild_modules.module_id, moduleId),
+                    ),
+                )
+                .limit(1);
 
-        if (existingError) {
-            console.error("Failed to read current module state", existingError);
-            return res.status(500).json({ error: "Failed to update module status" });
-        }
-
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .upsert(
-                {
+            const [data] = await db
+                .insert(guild_modules)
+                .values({
                     guild_id: guildId,
                     module_id: moduleId,
                     enabled,
-                    config: existing?.config ?? {},
-                },
-                { onConflict: "guild_id,module_id" },
-            )
-            .select("enabled, updated_at")
-            .single();
+                    config: (existing?.config as Json | undefined) ?? {},
+                })
+                .onConflictDoUpdate({
+                    target: [guild_modules.guild_id, guild_modules.module_id],
+                    set: {
+                        enabled,
+                        config: (existing?.config as Json | undefined) ?? {},
+                        updated_at: new Date(),
+                    },
+                })
+                .returning({
+                    enabled: guild_modules.enabled,
+                    updated_at: guild_modules.updated_at,
+                });
 
-        if (error) {
+            if (!data) {
+                throw new Error("Module status upsert returned no row");
+            }
+
+            guildModulesCache.delete(guildId);
+
+            res.json({
+                guildId,
+                module: moduleId,
+                enabled: data.enabled,
+                updatedAt: data.updated_at,
+            });
+        } catch (error) {
             console.error("Failed to update module status", error);
             return res.status(500).json({ error: "Failed to update module status" });
         }
-
-        guildModulesCache.delete(guildId);
-
-        res.json({ guildId, module: moduleId, enabled: data.enabled, updatedAt: data.updated_at });
     },
 );
 
@@ -434,11 +478,11 @@ app.get("/api/guild/:guildId", requireAuth, hasAccess, async (req, res) => {
 
     const guild: any = (await client.guilds.fetch(guildId as string)).toJSON();
 
-    const guildConfig = await supabase
-        .from("guilds")
-        .select("config")
-        .eq("guild_id", String(guildId))
-        .single();
+    const [guildConfig] = await db
+        .select({ config: guilds.config })
+        .from(guilds)
+        .where(eq(guilds.guild_id, String(guildId)))
+        .limit(1);
 
     const formattedGuild = {
         id: guild.id,
