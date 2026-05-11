@@ -7,7 +7,6 @@ import {
     type NuitCommand,
 } from "@nuit-bot/api";
 import config from "../../utility/config";
-import { getSupabaseClient } from "../../utility/supabase";
 import { client } from "../main";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "path";
@@ -18,8 +17,6 @@ import { TtlCache } from "../../utility/cache";
 import { db } from "../../db/main";
 import { guild_modules, guilds } from "../../db/schema";
 import { and, eq } from "drizzle-orm";
-
-const supabase = getSupabaseClient();
 
 export const guildModulesCache = new TtlCache<
     string,
@@ -151,7 +148,7 @@ export async function loadModule(
         };
 
         const ctx: ModuleContext = {
-            supabase,
+            db,
             config,
             client,
             api: createAPI(registry, moduleName, kind),
@@ -293,7 +290,7 @@ export async function setupCommandsAndEvents() {
 
         const baseCtx: BaseCtx = {
             client,
-            supabase,
+            db,
             config,
         };
 
