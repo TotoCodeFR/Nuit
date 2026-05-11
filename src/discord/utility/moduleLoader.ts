@@ -198,6 +198,7 @@ export async function setupCommandsAndEvents() {
                     );
                 }
 
+                // does mean that guilds added when bot was offline are rejected here
                 if (!(await isGuildAvailable(guildId))) return;
 
                 let modules = guildModulesCache.get(guildId);
