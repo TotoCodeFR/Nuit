@@ -41,3 +41,6 @@ registry.lock
 
 # Temp folder, used for temporary PR stuff
 .temp
+
+# Better Auth migrations, you should generate them yourself
+better-auth_migrations
