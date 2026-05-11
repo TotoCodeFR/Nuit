@@ -1,44 +1,22 @@
 import { app } from "./main.ts";
-import { getSupabaseClient } from "../utility/supabase.ts";
-import type { Session as SupabaseSession } from "@supabase/supabase-js";
+import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
+import { auth } from "../lib/auth";
 
-declare module "express-session" {
-    interface SessionData {
-        supabaseSession: SupabaseSession;
-    }
-}
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
-app.get("/auth/discord/login", async (_req, res) => {
-    const { data, error } = await getSupabaseClient().auth.signInWithOAuth({
-        provider: "discord",
-        options: {
-            redirectTo: process.env.DISCORD_CALLBACK_URL,
-            scopes: "identify guilds email",
+app.get("/auth/discord/login", async (req, res) => {
+    const result = await auth.api.signInSocial({
+        headers: fromNodeHeaders(req.headers),
+        body: {
+            provider: "discord",
+            callbackURL: "/dashboard",
+            errorCallbackURL: "/",
         },
     });
-    if (error || !data.url) return res.status(500).send(error?.message);
-    res.redirect(data.url);
-});
 
-app.get("/auth/discord/callback", async (req, res) => {
-    const code = req.query.code as string;
-    if (!code) return res.redirect("/");
+    if ("url" in result && result.url) {
+        return res.redirect(result.url);
+    }
 
-    const { data, error } =
-        await getSupabaseClient().auth.exchangeCodeForSession(code);
-    if (error || !data.session) return res.redirect("/");
-
-    req.session.supabaseSession = data.session;
-    res.redirect("/dashboard");
-});
-
-app.get("/auth/logout", async (req, res) => {
-    await getSupabaseClient().auth.signOut();
-    req.session.destroy(() => res.redirect("/"));
-});
-
-app.get("/auth/discord/addbot", async (req, res) => {
-    res.redirect(
-        `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}`,
-    );
+    return res.status(500).send("Failed to start Discord sign-in");
 });
