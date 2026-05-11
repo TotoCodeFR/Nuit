@@ -85,18 +85,20 @@ Put the following environment variables in your `.env` file:
 
 - `DISCORD_TOKEN`: Your Discord bot token from the Discord Developer Portal
 - `DISCORD_CLIENT_ID`: Your Discord bot's client ID
-- `DISCORD_CALLBACK_URL`: The URL that's used for Supabase Auth redirecting. See format below
+- `DISCORD_CLIENT_SECRET`: Your Discord application's client secret
+- `BETTER_AUTH_SECRET`: A random secret used by Better Auth to sign cookies and tokens
+- `BETTER_AUTH_URL`: The public base URL for this app
 - `SUPABASE_URL`: Your Supabase project URL
 - `SUPABASE_KEY`: Your Supabase secret key (MUST BE SECRET KEY, found in Supabase dashboard > Settings > API Keys)
-- `SESSION_SECRET`: A randomized string that's used for storing express-session data
+- `DATABASE_URL`: Your PostgreSQL connection string
 
 They must be formatted like the following:
 
 ```ini
 DISCORD_TOKEN=your-discord-bot-token-here
 DISCORD_CLIENT_ID=your-discord-client-id
-DISCORD_CALLBACK_URL=${base_server_url}/auth/discord/callback
-SUPABASE_URL=https://your-supabase-project
-SUPABASE_KEY=your-supabase-service-role-key
-SESSION_SECRET=randomized-session-secret-here
+DISCORD_CLIENT_SECRET=your-discord-client-secret
+BETTER_AUTH_SECRET=your-random-secret-here
+BETTER_AUTH_URL=${base_server_url}
+DATABASE_URL=postgresql://postgres:password@host:5432/postgres
 ```
