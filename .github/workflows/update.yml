@@ -33,12 +33,38 @@ jobs:
                   git remote add origin https://github.com/${{ github.repository }}.git
                   git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
+            - name: Set release variables
+              id: vars
+              run: |
+                  if [ "${{ github.event_name }}" = "release" ]; then
+                    echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+                    echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+                    echo "body=${{ github.event.release.body }}" >> $GITHUB_OUTPUT
+                    echo "prerelease=${{ github.event.release.prerelease }}" >> $GITHUB_OUTPUT
+                    echo "author=${{ github.event.release.author.login }}" >> $GITHUB_OUTPUT
+                    echo "author_url=https://github.com/${{ github.event.release.author.login }}" >> $GITHUB_OUTPUT
+                    echo "author_icon=${{ github.event.release.author.avatar_url }}" >> $GITHUB_OUTPUT
+                    echo "html_url=${{ github.event.release.html_url }}" >> $GITHUB_OUTPUT
+                    echo "published_at=${{ github.event.release.published_at }}" >> $GITHUB_OUTPUT
+                  else
+                    echo "tag_name=${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+                    echo "name=${{ inputs.name }}" >> $GITHUB_OUTPUT
+                    echo "body=${{ inputs.body }}" >> $GITHUB_OUTPUT
+                    echo "prerelease=${{ inputs.prerelease }}" >> $GITHUB_OUTPUT
+                    echo "author=${{ github.actor }}" >> $GITHUB_OUTPUT
+                    echo "author_url=https://github.com/${{ github.actor }}" >> $GITHUB_OUTPUT
+                    AUTHOR_ICON=$(curl -fsSL "https://api.github.com/users/${{ github.actor }}" | jq -r '.avatar_url // ""')
+                    echo "author_icon=$AUTHOR_ICON" >> $GITHUB_OUTPUT
+                    echo "html_url=https://github.com/${{ github.repository }}/releases/tag/${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+                    echo "published_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Send Discord embed
               env:
                   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
                   PING_ROLE_ID: ${{ secrets.PING_ROLE_ID }}
               run: |
-                  VERSION="${{ github.event.release.tag_name }}"
+                  VERSION="${{ steps.vars.outputs.tag_name }}"
 
                   # Strip leading 'v', then split into parts
                   SEMVER="${VERSION#v}"
@@ -77,17 +103,17 @@ jobs:
                       -d "$PING_PAYLOAD"
                   fi
 
-                  NAME="${{ github.event.release.name }}"
-                  URL="${{ github.event.release.html_url }}"
-                  AUTHOR="${{ github.event.release.author.login }}"
-                  AUTHOR_URL="https://github.com/${{ github.event.release.author.login }}"
-                  AUTHOR_ICON="${{ github.event.release.author.avatar_url }}"
-                  PUBLISHED_AT="${{ github.event.release.published_at }}"
-                  PRERELEASE="${{ github.event.release.prerelease }}"
+                  NAME="${{ steps.vars.outputs.name }}"
+                  URL="${{ steps.vars.outputs.html_url }}"
+                  AUTHOR="${{ steps.vars.outputs.author }}"
+                  AUTHOR_URL="${{ steps.vars.outputs.author_url }}"
+                  AUTHOR_ICON="${{ steps.vars.outputs.author_icon }}"
+                  PUBLISHED_AT="${{ steps.vars.outputs.published_at }}"
+                  PRERELEASE="${{ steps.vars.outputs.prerelease }}"
 
                   # Truncate body to Discord's embed description limit (4096 chars)
                   BODY=$(cat << 'EOF'
-                  ${{ github.event.release.body }}
+                  ${{ steps.vars.outputs.body }}
                   EOF
                   )
                   BODY="${BODY:0:4000}"
