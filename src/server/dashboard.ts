@@ -1,16 +1,19 @@
 import type { NextFunction, Request, Response } from "express";
 import { app } from "./main";
-import type { User } from "@supabase/supabase-js";
+import { fromNodeHeaders } from "better-auth/node";
 import type { Json } from "@nuit-bot/api";
 import path from "node:path";
 import { PermissionsBitField } from "discord.js";
+import { auth } from "../lib/auth";
 import { client } from "../discord/main";
 import {
     globalRegistry,
     guildModulesCache,
 } from "../discord/utility/moduleLoader";
 import { TtlCache } from "../utility/cache";
-import { getSupabaseClient } from "../utility/supabase";
+import { db } from "../db/main";
+import { guild_modules, guilds } from "../db/schema";
+import { and, eq } from "drizzle-orm";
 
 export interface DiscordRESTGuild {
     id: string;
@@ -24,7 +27,11 @@ export interface DiscordRESTGuild {
 export const mutualGuildsCache = new TtlCache<string, []>(90_000);
 export const guildCache = new TtlCache<string, object>(90_000);
 
-const supabase = getSupabaseClient();
+interface DashboardAuthUser {
+    id: string;
+    name: string;
+    image?: string | null;
+}
 
 function getModuleSchema(moduleId: string) {
     return globalRegistry.config.filter((field) => field.module === moduleId);
@@ -77,16 +84,20 @@ async function getGuildModulesOverview(guildId: string) {
     let storedModules = guildModulesCache.get(guildId);
 
     if (!storedModules) {
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .select("*")
-            .eq("guild_id", guildId);
-
-        if (error) {
-            throw error;
-        }
-
-        storedModules = data ?? [];
+        const rows = await db
+            .select({
+                guild_id: guild_modules.guild_id,
+                module_id: guild_modules.module_id,
+                enabled: guild_modules.enabled,
+                config: guild_modules.config,
+                updated_at: guild_modules.updated_at,
+            })
+            .from(guild_modules)
+            .where(eq(guild_modules.guild_id, guildId));
+        storedModules = rows.map((row) => ({
+            ...row,
+            config: (row.config as Json | null) ?? null,
+        }));
         guildModulesCache.set(guildId, storedModules);
     }
 
@@ -143,20 +154,43 @@ export async function getMutualGuilds(providerToken: string, userId: string) {
     });
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
-    if (!req.session.supabaseSession)
+async function getAuthSession(req: Request) {
+    return auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+}
+
+async function getDiscordAccessToken(req: Request) {
+    const tokens = await auth.api.getAccessToken({
+        headers: fromNodeHeaders(req.headers),
+        body: {
+            providerId: "discord",
+        },
+    });
+
+    return tokens.accessToken;
+}
+
+export async function requireAuth(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) {
+    const session = await getAuthSession(req);
+
+    if (!session) {
         return res.redirect("/auth/discord/login");
+    }
+
     next();
 }
 
-export function userToDiscord(user: User) {
+export function userToDiscord(user: DashboardAuthUser) {
     if (!user) throw new Error("User does not exist");
 
     return {
-        displayName: user.user_metadata.custom_claims.global_name,
-        username: user.user_metadata.full_name,
-        avatarUrl: user.user_metadata.avatar_url,
-        id: user.user_metadata.provider_id,
+        displayName: user.name,
+        username: user.name,
+        avatarUrl: user.image ?? null,
+        id: user.id,
     };
 }
 
@@ -168,9 +202,15 @@ export async function hasAccess(
     const guildId = req.params.guildId;
     if (typeof guildId !== "string") throw new Error("Missing guild ID");
 
+    const session = await getAuthSession(req);
+
+    if (!session) {
+        return res.redirect("/auth/discord/login");
+    }
+
     const mutual = await getMutualGuilds(
-        req.session.supabaseSession?.provider_token as string,
-        userToDiscord(req.session.supabaseSession?.user as User).id,
+        await getDiscordAccessToken(req),
+        userToDiscord(session.user).id,
     );
 
     if (mutual.some((g: DiscordRESTGuild) => g.id === guildId)) {
@@ -209,28 +249,40 @@ app.get(
 
         const schema = getModuleSchema(moduleId);
 
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .select("config, enabled, updated_at")
-            .eq("guild_id", guildId)
-            .eq("module_id", moduleId)
-            .maybeSingle();
+        try {
+            const [data] = await db
+                .select({
+                    config: guild_modules.config,
+                    enabled: guild_modules.enabled,
+                    updated_at: guild_modules.updated_at,
+                })
+                .from(guild_modules)
+                .where(
+                    and(
+                        eq(guild_modules.guild_id, guildId),
+                        eq(guild_modules.module_id, moduleId),
+                    ),
+                )
+                .limit(1);
 
-        if (error) {
+            const config = data?.config as Json | undefined;
+
+            res.json({
+                guildId,
+                module: moduleId,
+                schema,
+                enabled: data?.enabled ?? false,
+                config: isJsonObject(config)
+                    ? (config as Record<string, Json>)
+                    : {},
+                updatedAt: data?.updated_at ?? null,
+            });
+        } catch (error) {
             console.error("Failed to fetch module config", error);
             return res
                 .status(500)
                 .json({ error: "Failed to fetch module config" });
         }
-
-        res.json({
-            guildId,
-            module: moduleId,
-            schema,
-            enabled: data?.enabled ?? false,
-            config: isJsonObject(data?.config) ? data.config : {},
-            updatedAt: data?.updated_at ?? null,
-        });
     },
 );
 
@@ -263,51 +315,64 @@ app.put(
             });
         }
 
-        const { data: existing, error: existingError } = await supabase
-            .from("guild_modules")
-            .select("enabled")
-            .eq("guild_id", guildId)
-            .eq("module_id", moduleId)
-            .maybeSingle();
+        try {
+            const [existing] = await db
+                .select({ enabled: guild_modules.enabled })
+                .from(guild_modules)
+                .where(
+                    and(
+                        eq(guild_modules.guild_id, guildId),
+                        eq(guild_modules.module_id, moduleId),
+                    ),
+                )
+                .limit(1);
 
-        if (existingError) {
-            console.error("Failed to read current module state", existingError);
-            return res
-                .status(500)
-                .json({ error: "Failed to update module config" });
-        }
-
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .upsert(
-                {
+            const [data] = await db
+                .insert(guild_modules)
+                .values({
                     guild_id: guildId,
                     module_id: moduleId,
                     config: nextConfig,
                     enabled: existing?.enabled ?? false,
-                },
-                { onConflict: "guild_id,module_id" },
-            )
-            .select("config, enabled, updated_at")
-            .single();
+                })
+                .onConflictDoUpdate({
+                    target: [guild_modules.guild_id, guild_modules.module_id],
+                    set: {
+                        config: nextConfig,
+                        enabled: existing?.enabled ?? false,
+                        updated_at: new Date(),
+                    },
+                })
+                .returning({
+                    config: guild_modules.config,
+                    enabled: guild_modules.enabled,
+                    updated_at: guild_modules.updated_at,
+                });
 
-        if (error) {
+            if (!data) {
+                throw new Error("Module config upsert returned no row");
+            }
+
+            const config = data.config as Json | undefined;
+
+            guildModulesCache.delete(guildId);
+
+            res.json({
+                guildId,
+                module: moduleId,
+                schema: getModuleSchema(moduleId),
+                enabled: data.enabled,
+                config: isJsonObject(config)
+                    ? (config as Record<string, Json>)
+                    : {},
+                updatedAt: data.updated_at,
+            });
+        } catch (error) {
             console.error("Failed to update module config", error);
             return res
                 .status(500)
                 .json({ error: "Failed to update module config" });
         }
-
-        guildModulesCache.delete(guildId);
-
-        res.json({
-            guildId,
-            module: moduleId,
-            schema: getModuleSchema(moduleId),
-            enabled: data.enabled,
-            config: isJsonObject(data.config) ? data.config : {},
-            updatedAt: data.updated_at,
-        });
     },
 );
 
@@ -334,40 +399,55 @@ app.put(
             return res.status(400).json({ error: "Expected body shape { enabled: boolean }" });
         }
 
-        const { data: existing, error: existingError } = await supabase
-            .from("guild_modules")
-            .select("config")
-            .eq("guild_id", guildId)
-            .eq("module_id", moduleId)
-            .maybeSingle();
+        try {
+            const [existing] = await db
+                .select({ config: guild_modules.config })
+                .from(guild_modules)
+                .where(
+                    and(
+                        eq(guild_modules.guild_id, guildId),
+                        eq(guild_modules.module_id, moduleId),
+                    ),
+                )
+                .limit(1);
 
-        if (existingError) {
-            console.error("Failed to read current module state", existingError);
-            return res.status(500).json({ error: "Failed to update module status" });
-        }
-
-        const { data, error } = await supabase
-            .from("guild_modules")
-            .upsert(
-                {
+            const [data] = await db
+                .insert(guild_modules)
+                .values({
                     guild_id: guildId,
                     module_id: moduleId,
                     enabled,
-                    config: existing?.config ?? {},
-                },
-                { onConflict: "guild_id,module_id" },
-            )
-            .select("enabled, updated_at")
-            .single();
+                    config: (existing?.config as Json | undefined) ?? {},
+                })
+                .onConflictDoUpdate({
+                    target: [guild_modules.guild_id, guild_modules.module_id],
+                    set: {
+                        enabled,
+                        config: (existing?.config as Json | undefined) ?? {},
+                        updated_at: new Date(),
+                    },
+                })
+                .returning({
+                    enabled: guild_modules.enabled,
+                    updated_at: guild_modules.updated_at,
+                });
 
-        if (error) {
+            if (!data) {
+                throw new Error("Module status upsert returned no row");
+            }
+
+            guildModulesCache.delete(guildId);
+
+            res.json({
+                guildId,
+                module: moduleId,
+                enabled: data.enabled,
+                updatedAt: data.updated_at,
+            });
+        } catch (error) {
             console.error("Failed to update module status", error);
             return res.status(500).json({ error: "Failed to update module status" });
         }
-
-        guildModulesCache.delete(guildId);
-
-        res.json({ guildId, module: moduleId, enabled: data.enabled, updatedAt: data.updated_at });
     },
 );
 
@@ -395,23 +475,33 @@ app.get(
 );
 
 app.get("/api/users/@me", (req, res) => {
-    if (!req.session.supabaseSession?.user) {
-        return res.status(401).send("Unauthorized");
-    }
-    res.json(userToDiscord(req.session.supabaseSession?.user!));
+    getAuthSession(req)
+        .then((session) => {
+            if (!session?.user) {
+                return res.status(401).send("Unauthorized");
+            }
+
+            return res.json(userToDiscord(session.user));
+        })
+        .catch((error) => {
+            console.error("Failed to fetch current user", error);
+            return res.status(500).send("Internal Server Error");
+        });
 });
 
 app.get("/api/guilds/common", requireAuth, async (req, res) => {
-    if (!req.session.supabaseSession?.user) {
+    const session = await getAuthSession(req);
+
+    if (!session?.user) {
         return res.status(401).send("Unauthorized");
     }
 
-    const providerToken = req.session.supabaseSession?.provider_token;
+    const providerToken = await getDiscordAccessToken(req);
     if (!providerToken) return res.status(401).send("No provider token");
 
     let mutualGuilds;
 
-    const user = userToDiscord(req.session.supabaseSession.user);
+    const user = userToDiscord(session.user);
 
     try {
         mutualGuilds = await getMutualGuilds(providerToken, user.id);
@@ -434,11 +524,11 @@ app.get("/api/guild/:guildId", requireAuth, hasAccess, async (req, res) => {
 
     const guild: any = (await client.guilds.fetch(guildId as string)).toJSON();
 
-    const guildConfig = await supabase
-        .from("guilds")
-        .select("config")
-        .eq("guild_id", String(guildId))
-        .single();
+    const [guildConfig] = await db
+        .select({ config: guilds.config })
+        .from(guilds)
+        .where(eq(guilds.guild_id, String(guildId)))
+        .limit(1);
 
     const formattedGuild = {
         id: guild.id,

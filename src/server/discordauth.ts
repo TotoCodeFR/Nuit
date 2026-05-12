@@ -1,44 +1,48 @@
 import { app } from "./main.ts";
-import { getSupabaseClient } from "../utility/supabase.ts";
-import type { Session as SupabaseSession } from "@supabase/supabase-js";
+import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
+import { auth } from "../lib/auth";
 
-declare module "express-session" {
-    interface SessionData {
-        supabaseSession: SupabaseSession;
-    }
-}
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
-app.get("/auth/discord/login", async (_req, res) => {
-    const { data, error } = await getSupabaseClient().auth.signInWithOAuth({
-        provider: "discord",
-        options: {
-            redirectTo: process.env.DISCORD_CALLBACK_URL,
-            scopes: "identify guilds email",
+app.get("/auth/discord/login", async (req, res) => {
+    const result = await auth.api.signInSocial({
+        headers: fromNodeHeaders(req.headers),
+        returnHeaders: true,
+        body: {
+            provider: "discord",
+            callbackURL: "/dashboard",
+            errorCallbackURL: "/",
         },
     });
-    if (error || !data.url) return res.status(500).send(error?.message);
-    res.redirect(data.url);
-});
 
-app.get("/auth/discord/callback", async (req, res) => {
-    const code = req.query.code as string;
-    if (!code) return res.redirect("/");
+    if ("headers" in result && result.headers) {
+        const headers = result.headers as Headers & {
+            getSetCookie?: () => string[];
+        };
+        const setCookies = headers.getSetCookie?.() ?? [];
 
-    const { data, error } =
-        await getSupabaseClient().auth.exchangeCodeForSession(code);
-    if (error || !data.session) return res.redirect("/");
+        for (const cookie of setCookies) {
+            res.append("set-cookie", cookie);
+        }
 
-    req.session.supabaseSession = data.session;
-    res.redirect("/dashboard");
-});
+        if (!setCookies.length) {
+            const setCookie = headers.get("set-cookie");
 
-app.get("/auth/logout", async (req, res) => {
-    await getSupabaseClient().auth.signOut();
-    req.session.destroy(() => res.redirect("/"));
-});
+            if (setCookie) {
+                res.append("set-cookie", setCookie);
+            }
+        }
 
-app.get("/auth/discord/addbot", async (req, res) => {
-    res.redirect(
-        `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}`,
-    );
+        const location = headers.get("location");
+
+        if (typeof location === "string" && location.length > 0) {
+            return res.redirect(location);
+        }
+    }
+
+    if ("url" in result && typeof result.url === "string") {
+        return res.redirect(result.url);
+    }
+
+    return res.status(500).send("Failed to start Discord sign-in");
 });
