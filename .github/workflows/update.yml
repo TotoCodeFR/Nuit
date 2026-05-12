@@ -7,9 +7,11 @@ jobs:
     notify:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-              with:
-                  fetch-tags: true
+            - name: Fetch tags only
+              run: |
+                  git init
+                  git remote add origin https://github.com/${{ github.repository }}.git
+                  git fetch --depth=1 origin +refs/tags/*:refs/tags/*
 
             - name: Send Discord embed
               env:
