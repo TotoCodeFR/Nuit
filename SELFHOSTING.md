@@ -106,6 +106,8 @@ Put the following environment variables in your `.env` file:
 
 They must be formatted like the following:
 
+(Or see [.env.example](./.env.example))
+
 ```ini
 DISCORD_TOKEN=your-discord-bot-token-here
 DISCORD_CLIENT_ID=your-discord-client-id
