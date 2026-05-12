@@ -3,6 +3,26 @@ name: Notify Discord on Release
 on:
     release:
         types: [published]
+    workflow_dispatch:
+        inputs:
+            tag_name:
+                description: "Release tag (e.g. v0.2.1)"
+                required: true
+                type: string
+            name:
+                description: "Release name"
+                required: true
+                type: string
+            body:
+                description: "Release notes"
+                required: false
+                type: string
+                default: ""
+            prerelease:
+                description: "Is this a prerelease?"
+                required: false
+                type: boolean
+                default: false
 jobs:
     notify:
         runs-on: ubuntu-latest
