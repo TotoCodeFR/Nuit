@@ -1,0 +1,34 @@
+# CODEOWNERS for Nuit-Bot/Nuit
+
+* @Nuit-Bot/core
+
+# Discord bot
+
+/src/discord/ @Nuit-Bot/discord
+
+# Web server & auth
+
+/src/server/ @Nuit-Bot/backend
+
+# Frontend
+
+/src/web/ @Nuit-Bot/frontend
+
+# 1st party modules
+
+/src/modules/ @Nuit-Bot/modules
+
+# Config & environment
+
+/config.example.toml @Nuit-Bot/core
+/config.toml @Nuit-Bot/core
+
+# CI/CD & repo management
+
+/.github/ @Nuit-Bot/core
+
+# Dependencies
+
+/package.json @Nuit-Bot/core
+/bun.lock @Nuit-Bot/core
+/tsconfig.json @Nuit-Bot/core
