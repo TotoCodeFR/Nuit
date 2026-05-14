@@ -67,49 +67,61 @@ export default {
             });
         }
 
-        let targetMember: GuildMember;
+        const targetUser = interaction.options.getUser("target", true);
+
+        let targetMember: GuildMember | null = null;
         try {
-            targetMember = await interaction.guild!.members.fetch(
-                interaction.options.getUser("target")!.id,
-            );
-        } catch (error) {
-            return await interaction.editReply({
-                content: cleanMultiline(`# User not found!
-                The user you're trying to ban doesn't seem to exist or isn't in this server.
-                -# Make sure the user is still in the server and try again.`),
-            });
+            targetMember = await interaction.guild!.members.fetch(targetUser.id);
+        } catch {
+            targetMember = null;
         }
 
-        const botHighest = botMember.roles.highest;
-        const targetHighest = targetMember.roles.highest;
-        if (botHighest.position <= targetHighest.position) {
-            return await interaction.editReply({
-                content: cleanMultiline(`# Well that's unfortunate!
-                I can't ban that user since my role is lower or equal to theirs.
-                -# Maybe an admin with higher permissions could give me that access?`),
-            });
+        if (targetMember) {
+            const botHighest = botMember.roles.highest;
+            const targetHighest = targetMember.roles.highest;
+            if (botHighest.position <= targetHighest.position) {
+                return await interaction.editReply({
+                    content: cleanMultiline(`# Well that's unfortunate!
+                    I can't ban that user since my role is lower or equal to theirs.
+                    -# Maybe an admin with higher permissions could give me that access?`),
+                });
+            }
+
+            const admin = interaction.member as GuildMember;
+            const adminHighest = admin?.roles.highest;
+            if (adminHighest.position <= targetHighest.position) {
+                return await interaction.editReply({
+                    content: cleanMultiline(`# Well that's not gonna work!
+                    You can't ban someone with a role higher than or equal to yours.
+                    -# Role hierarchy matters, even for admins! Maybe ask someone with higher permissions?`),
+                });
+            }
         }
 
-        const admin = interaction.member as GuildMember;
-        const adminHighest = admin?.roles.highest;
-        if (adminHighest.position <= targetHighest.position) {
-            return await interaction.editReply({
-                content: cleanMultiline(`# Well that's not gonna work!
-                You can't ban someone with a role higher than or equal to yours.
-                -# Role hierarchy matters, even for admins! Maybe ask someone with higher permissions?`),
-            });
-        }
+        const targetDisplayName =
+            targetMember?.displayName ||
+            targetUser.globalName ||
+            targetUser.username;
 
         const confirmEmbed = new EmbedBuilder()
             .setColor("Blurple")
             .setDescription(
-                `Are you sure you want to ban \`${targetMember.displayName}\` from this server?`,
+                `Are you sure you want to ban \`${targetDisplayName}\` from this server?`,
             )
             .addFields(
-                {
-                    name: `\`${targetMember.displayName}\``,
-                    value: `**Time on the server**: <t:${Math.floor(targetMember.joinedTimestamp! / 1000)}:R>`,
-                },
+                ...(targetMember
+                    ? [
+                          {
+                              name: `\`${targetDisplayName}\``,
+                              value: `**Time on the server**: <t:${Math.floor(targetMember.joinedTimestamp! / 1000)}:R>`,
+                          },
+                      ]
+                    : [
+                          {
+                              name: `\`${targetDisplayName}\``,
+                              value: "**Status**: Not currently in this server",
+                          },
+                      ]),
                 {
                     name: "Reason",
                     value: `${interaction.options.getString("reason") || "No reason specified"}`,
@@ -120,7 +132,7 @@ export default {
 
         const confirmButton = new ButtonBuilder()
             .setCustomId(
-                `ban/confirm/${targetMember.id}/${Date.now().toString()}`,
+                `ban/confirm/${targetUser.id}/${Date.now().toString()}`,
             )
             .setLabel("Confirm")
             .setEmoji("✅")
@@ -128,7 +140,7 @@ export default {
 
         const cancelButton = new ButtonBuilder()
             .setCustomId(
-                `ban/cancel/${targetMember.id}/${Date.now().toString()}`,
+                `ban/cancel/${targetUser.id}/${Date.now().toString()}`,
             )
             .setLabel("Cancel")
             .setEmoji("❌")
@@ -158,19 +170,19 @@ export default {
 
             if (confirmation.customId.startsWith("ban/confirm")) {
                 await confirmation.update({
-                    content: `# Processing ban...\nMaking sure ${targetMember.displayName} can't come back to cause chaos.\n-# This might take a moment while I work my magic.`,
+                    content: `# Processing ban...\nMaking sure ${targetDisplayName} can't come back to cause chaos.\n-# This might take a moment while I work my magic.`,
                     components: [],
                     embeds: [],
                 });
 
                 try {
-                    await targetMember.ban({
+                    await interaction.guild!.members.ban(targetUser.id, {
                         reason:
                             interaction.options.getString("reason") ||
                             undefined,
                     });
                     await interaction.editReply({
-                        content: `# Got 'em!\n${targetMember.displayName} has been successfully banned from the server.\n-# They won't be causing trouble anymore!`,
+                        content: `# Got 'em!\n${targetDisplayName} has been successfully banned from the server.\n-# They won't be causing trouble anymore!`,
                     });
                 } catch (error) {
                     await interaction.editReply({
