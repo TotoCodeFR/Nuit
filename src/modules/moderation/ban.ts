@@ -62,7 +62,8 @@ export default {
             return await interaction.editReply({
                 content: cleanMultiline(`# Well that's awkward!
                 I'm lacking the permission to ban users from this server.
-                -# Maybe an admin could grant it to me? I promise I won't nuke anything!`),
+                -# Maybe an admin could grant it to me? I promise I won't nuke anything*!
+                -# Unless the bot gets hacked I guess...`),
             });
         }
 
