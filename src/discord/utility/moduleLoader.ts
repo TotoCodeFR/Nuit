@@ -17,6 +17,7 @@ import { TtlCache } from "../../utility/cache";
 import { db } from "../../db/main";
 import { guild_modules, guilds } from "../../db/schema";
 import { and, eq } from "drizzle-orm";
+import { createMessageBus } from "../../core/bus";
 
 export const guildModulesCache = new TtlCache<
     string,
@@ -36,6 +37,8 @@ export const globalRegistry: ModuleRegistry = {
     events: [],
     config: [],
 };
+
+export const bus = createMessageBus();
 
 export async function getPackageJSON(path: string) {
     const packageRaw = await readFile(path, "utf-8").catch(() => null);
@@ -152,6 +155,7 @@ export async function loadModule(
             config,
             client,
             api: createAPI(registry, moduleName, kind),
+            bus,
         };
 
         await mod.setup(ctx);
@@ -199,7 +203,9 @@ export async function setupCommandsAndEvents() {
                 }
 
                 // does mean that guilds added when bot was offline are rejected here
-                if (!(await isGuildAvailable(guildId))) return;
+                if (!(await isGuildAvailable(guildId))) {
+                    return console.warn("uhhh how is that happening?");
+                }
 
                 let modules = guildModulesCache.get(guildId);
 
@@ -222,7 +228,7 @@ export async function setupCommandsAndEvents() {
                 }
 
                 const mod = modules.find((m) => m.module_id === event.module);
-                if (!mod?.enabled) return;
+                if (!mod?.enabled) return console.warn("so it's disabled huh");
             }
 
             await (event.handler as (...a: any[]) => Promise<void> | void)(
@@ -265,7 +271,8 @@ export async function setupCommandsAndEvents() {
             });
         }
 
-        if (!(await isGuildAvailable(guildId))) return;
+        if (!(await isGuildAvailable(guildId)))
+            return console.warn("uhhh how is that happening?");
 
         const [enabledModules] = await db
             .select({ enabled: guild_modules.enabled })
@@ -293,6 +300,7 @@ export async function setupCommandsAndEvents() {
             client,
             db,
             config,
+            bus,
         };
 
         try {
