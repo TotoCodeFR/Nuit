@@ -36,27 +36,39 @@ jobs:
             - name: Set release variables
               id: vars
               run: |
+                  set_output() {
+                    local key="$1"
+                    local value="$2"
+                    local delim
+                    delim="__NuitOutput_$(date +%s%N)__"
+                    {
+                      printf "%s<<%s\n" "$key" "$delim"
+                      printf "%s\n" "$value"
+                      printf "%s\n" "$delim"
+                    } >> "$GITHUB_OUTPUT"
+                  }
+
                   if [ "${{ github.event_name }}" = "release" ]; then
-                    echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-                    echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
-                    echo "body=${{ github.event.release.body }}" >> $GITHUB_OUTPUT
-                    echo "prerelease=${{ github.event.release.prerelease }}" >> $GITHUB_OUTPUT
-                    echo "author=${{ github.event.release.author.login }}" >> $GITHUB_OUTPUT
-                    echo "author_url=https://github.com/${{ github.event.release.author.login }}" >> $GITHUB_OUTPUT
-                    echo "author_icon=${{ github.event.release.author.avatar_url }}" >> $GITHUB_OUTPUT
-                    echo "html_url=${{ github.event.release.html_url }}" >> $GITHUB_OUTPUT
-                    echo "published_at=${{ github.event.release.published_at }}" >> $GITHUB_OUTPUT
+                    set_output "tag_name" "${{ github.event.release.tag_name }}"
+                    set_output "name" "${{ github.event.release.name }}"
+                    set_output "body" "${{ github.event.release.body }}"
+                    set_output "prerelease" "${{ github.event.release.prerelease }}"
+                    set_output "author" "${{ github.event.release.author.login }}"
+                    set_output "author_url" "https://github.com/${{ github.event.release.author.login }}"
+                    set_output "author_icon" "${{ github.event.release.author.avatar_url }}"
+                    set_output "html_url" "${{ github.event.release.html_url }}"
+                    set_output "published_at" "${{ github.event.release.published_at }}"
                   else
-                    echo "tag_name=${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
-                    echo "name=${{ inputs.name }}" >> $GITHUB_OUTPUT
-                    echo "body=${{ inputs.body }}" >> $GITHUB_OUTPUT
-                    echo "prerelease=${{ inputs.prerelease }}" >> $GITHUB_OUTPUT
-                    echo "author=${{ github.actor }}" >> $GITHUB_OUTPUT
-                    echo "author_url=https://github.com/${{ github.actor }}" >> $GITHUB_OUTPUT
+                    set_output "tag_name" "${{ inputs.tag_name }}"
+                    set_output "name" "${{ inputs.name }}"
+                    set_output "body" "${{ inputs.body }}"
+                    set_output "prerelease" "${{ inputs.prerelease }}"
+                    set_output "author" "${{ github.actor }}"
+                    set_output "author_url" "https://github.com/${{ github.actor }}"
                     AUTHOR_ICON=$(curl -fsSL "https://api.github.com/users/${{ github.actor }}" | jq -r '.avatar_url // ""')
-                    echo "author_icon=$AUTHOR_ICON" >> $GITHUB_OUTPUT
-                    echo "html_url=https://github.com/${{ github.repository }}/releases/tag/${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
-                    echo "published_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+                    set_output "author_icon" "$AUTHOR_ICON"
+                    set_output "html_url" "https://github.com/${{ github.repository }}/releases/tag/${{ inputs.tag_name }}"
+                    set_output "published_at" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
                   fi
 
             - name: Send Discord embed
