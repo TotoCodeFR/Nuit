@@ -5,7 +5,7 @@
     "": {
       "name": "bot-discord-multi",
       "dependencies": {
-        "@nuit-bot/api": "^0.0.21",
+        "@nuit-bot/api": "^0.0.22",
         "better-auth": "^1.6.10",
         "chalk": "^5.6.2",
         "discord-api-types": "^0.38.47",
@@ -120,7 +120,7 @@
 
     "@noble/hashes": ["@noble/hashes@2.2.0", "", {}, "sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg=="],
 
-    "@nuit-bot/api": ["@nuit-bot/api@0.0.21", "", { "peerDependencies": { "@discordjs/builders": "^1", "discord.js": "^14" }, "optionalPeers": ["@discordjs/builders", "discord.js"] }, "sha512-AHzhvyLc5cQTnNx3PYgbkSM5mILrDTo5cdtYDmlyuUmK1I4i/zOgzCCZtNcyvmPWECNHZY2ohz4kgj+SsoWhzw=="],
+    "@nuit-bot/api": ["@nuit-bot/api@0.0.22", "", { "peerDependencies": { "@discordjs/builders": "^1", "discord.js": "^14" }, "optionalPeers": ["@discordjs/builders", "discord.js"] }, "sha512-J+Kuq96+/qPkwl6kK415XSQLOhMz1t5i04xA8pvaBRt/KpVjR+PVSwUIgMBZ+xhOFBoZuC6KUaGm+Hv3Dxt4aw=="],
 
     "@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.40.0", "", {}, "sha512-cifvXDhcqMwwTlTK04GBNeIe7yyo28Mfby85QXFe1Yk8nmi36Ab/5UQwptOx84SsoGNRg+EVSjwzfSZMy6pmlw=="],
 
