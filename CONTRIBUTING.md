@@ -126,7 +126,7 @@ When submitting a pull request:
 - Ensure all tests pass (if applicable)
 - Keep pull requests focused on a single feature or bug fix
 - Include documentation updates if applicable
-- Pull requests must not be entirely AI-generated. PRs that are completely AI-generated will be closed directly.
+- AI-generated pull requests are allowed and welcomed, but their review might not be prioritized.
 - Please note that we may take longer to review PRs depending on their size. Larger PRs require more time to properly evaluate.
 
 ### Pull Request Checklist
