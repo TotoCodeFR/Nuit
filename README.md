@@ -1,6 +1,12 @@
-# Nuit
+<div align="center">
 
-Nuit is a Discord bot built with TypeScript and Discord.js. The bot features a modular architecture with dynamic command and event loading capabilities. It supports slash commands and is designed to be easily extensible.
+<h1>Nuit</h1>
+
+<img src="./assets/nuit.png" width="128" height="128" />
+
+<p>The most customizable Discord bot that pretty much exists.</p>
+
+</div>
 
 ## Features
 
@@ -14,14 +20,6 @@ Nuit is a Discord bot built with TypeScript and Discord.js. The bot features a m
 ## Installation
 
 See [SELFHOSTING.md](./SELFHOSTING.md).
-
-## Adding Commands
-
-To add a new slash command:
-
-1. Create a new file in the `src/discord/commands/[category]/` directory
-2. Follow the structure of the ping command as a template
-3. Export a default object with `data` (SlashCommandBuilder) and `execute` (interaction handler)
 
 ## Contributing
 
