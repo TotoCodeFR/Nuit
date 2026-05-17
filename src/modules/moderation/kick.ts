@@ -12,6 +12,7 @@ import {
     type Interaction,
 } from "discord.js";
 import { cleanMultiline } from "../../discord/utility/cleanMultiline";
+import type { BaseCtx } from "@nuit-bot/api";
 
 export default {
     data: new SlashCommandBuilder()
@@ -37,7 +38,7 @@ export default {
                     "La raison de l'expulsion de l'utilisateur",
                 ),
         ),
-    async execute(interaction: Interaction) {
+    async execute(interaction: Interaction, ctx: BaseCtx) {
         if (!interaction.isChatInputCommand()) return;
 
         await interaction.deferReply({
@@ -167,6 +168,14 @@ export default {
                     await targetMember.kick(
                         interaction.options.getString("reason") || undefined,
                     );
+
+                    await ctx.bus.emit("logger:log", {
+                        guildId: interaction.guild!.id,
+                        title: "Kick",
+                        message: `User ${targetMember.displayName} was kicked by ${interaction.user.displayName} for ${interaction.options.getString("reason") ? `the reason \`${interaction.options.getString("reason")}\`` : "no reason"}`,
+                        level: "info",
+                    });
+
                     await interaction.editReply({
                         content: `# Got 'em!\n${targetMember.displayName} has been successfully kicked from the server.\n-# They won't be causing trouble anymore!`,
                     });
