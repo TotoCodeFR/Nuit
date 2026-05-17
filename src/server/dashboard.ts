@@ -381,7 +381,11 @@ app.put(
     requireAuth,
     hasAccess,
     async (
-        req: Request<{ guildId: string; module: string }, any, { enabled: boolean }>,
+        req: Request<
+            { guildId: string; module: string },
+            any,
+            { enabled: boolean }
+        >,
         res,
     ) => {
         const { guildId, module: moduleId } = req.params;
@@ -396,7 +400,9 @@ app.put(
         }
 
         if (typeof enabled !== "boolean") {
-            return res.status(400).json({ error: "Expected body shape { enabled: boolean }" });
+            return res
+                .status(400)
+                .json({ error: "Expected body shape { enabled: boolean }" });
         }
 
         try {
@@ -446,7 +452,9 @@ app.put(
             });
         } catch (error) {
             console.error("Failed to update module status", error);
-            return res.status(500).json({ error: "Failed to update module status" });
+            return res
+                .status(500)
+                .json({ error: "Failed to update module status" });
         }
     },
 );

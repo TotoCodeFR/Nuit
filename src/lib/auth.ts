@@ -15,6 +15,7 @@ export const auth = betterAuth({
             redirectURI: baseURL
                 ? `${baseURL}/api/auth/callback/discord`
                 : undefined,
+            scope: ["guilds"],
         },
     },
 });
