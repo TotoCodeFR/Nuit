@@ -1,0 +1,7 @@
+{
+    "name": "@nuit-bot/module-logger",
+    "main": "main.ts",
+    "nuit": {
+        "kind": "essential"
+    }
+}
