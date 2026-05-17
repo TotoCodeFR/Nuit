@@ -14,6 +14,7 @@ import {
     type UserResolvable,
 } from "discord.js";
 import { cleanMultiline } from "../../discord/utility/cleanMultiline";
+import type { BaseCtx } from "@nuit-bot/api";
 
 export default {
     data: new SlashCommandBuilder()
@@ -47,7 +48,7 @@ export default {
                     "La raison de débannir l'utilisateur",
                 ),
         ),
-    async execute(interaction: Interaction) {
+    async execute(interaction: Interaction, ctx: BaseCtx) {
         if (!interaction.isChatInputCommand()) return;
 
         await interaction.deferReply({
@@ -201,6 +202,14 @@ export default {
                         targetBan.user.id,
                         interaction.options.getString("reason") || undefined,
                     );
+
+                    await ctx.bus.emit("logger:log", {
+                        guildId: interaction.guild!.id,
+                        title: "Unban",
+                        message: `User ${targetBan.user.displayName} was unbanned by ${interaction.user.displayName} for ${interaction.options.getString("reason") ? `the reason \`${interaction.options.getString("reason")}\`` : "no reason"}`,
+                        level: "info",
+                    });
+
                     await interaction.editReply({
                         content: `# He's back!\n${targetBan.user.displayName} has been successfully unbanned from the server.\n-# They will have to rejoin using an invite though.`,
                     });

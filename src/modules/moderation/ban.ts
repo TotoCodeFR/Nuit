@@ -12,6 +12,7 @@ import {
     type Interaction,
 } from "discord.js";
 import { cleanMultiline } from "../../discord/utility/cleanMultiline";
+import type { BaseCtx } from "@nuit-bot/api";
 
 export default {
     data: new SlashCommandBuilder()
@@ -37,7 +38,7 @@ export default {
                     "La raison de bannir l'utilisateur",
                 ),
         ),
-    async execute(interaction: Interaction) {
+    async execute(interaction: Interaction, ctx: BaseCtx) {
         if (!interaction.isChatInputCommand()) return;
 
         await interaction.deferReply({
@@ -71,7 +72,9 @@ export default {
 
         let targetMember: GuildMember | null = null;
         try {
-            targetMember = await interaction.guild!.members.fetch(targetUser.id);
+            targetMember = await interaction.guild!.members.fetch(
+                targetUser.id,
+            );
         } catch {
             targetMember = null;
         }
@@ -139,9 +142,7 @@ export default {
             .setStyle(ButtonStyle.Primary);
 
         const cancelButton = new ButtonBuilder()
-            .setCustomId(
-                `ban/cancel/${targetUser.id}/${Date.now().toString()}`,
-            )
+            .setCustomId(`ban/cancel/${targetUser.id}/${Date.now().toString()}`)
             .setLabel("Cancel")
             .setEmoji("❌")
             .setStyle(ButtonStyle.Primary);
@@ -181,7 +182,15 @@ export default {
                             interaction.options.getString("reason") ||
                             undefined,
                     });
-                    await interaction.editReply({
+
+                    await ctx.bus.emit("logger:log", {
+                        guildId: interaction.guild!.id,
+                        title: "Ban",
+                        message: `User ${targetUser.displayName} was banned by ${interaction.user.displayName} for ${interaction.options.getString("reason") ? `the reason \`${interaction.options.getString("reason")}\`` : "no reason"}`,
+                        level: "info",
+                    });
+
+                    await await interaction.editReply({
                         content: `# Got 'em!\n${targetDisplayName} has been successfully banned from the server.\n-# They won't be causing trouble anymore!`,
                     });
                 } catch (error) {
