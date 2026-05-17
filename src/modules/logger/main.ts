@@ -75,4 +75,15 @@ export async function setup(ctx: ModuleContext) {
 
         await logChannel.send({ embeds: [logEmbed] });
     });
+
+    ctx.api.registerConfig([
+        {
+            key: "channelId",
+            label: "Log Channel ID",
+            type: "channel",
+            description: "Channel used for logging",
+            optional: true,
+            default: undefined,
+        },
+    ]);
 }
