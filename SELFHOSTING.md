@@ -1,21 +1,24 @@
 # Self-hosting Nuit
 
+> [!NOTE]
+> A CLI for Nuit is planned, but for now setup is manual.
+
+## Table of Contents
+
+- [Self-hosting Nuit](#self-hosting-nuit)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [Development](#development)
+    - [Production](#production)
+  - [Environment Variables](#environment-variables)
+
 ## Prerequisites
 
 - [Bun](https://bun.com) runtime
 - [Git](https://git-scm.com)
 
 ## Installation
->
-> [!NOTE]
-> A CLI for Nuit usage will be released someday, but for now, it's all manual.
-
-- [Self-hosting Nuit](#self-hosting-nuit)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-    - [Development](#development)
-    - [Production](#production)
-  - [Environment Variables](#environment-variables)
 
 ### Development
 
@@ -23,31 +26,26 @@
 
 ```bash
 git clone https://github.com/Nuit-Bot/Nuit.git
-```
-
-2. CD into the app:
-
-```bash
 cd Nuit
 ```
 
-3. Install dependencies:
+2. Install dependencies:
 
 ```bash
 bun install
 ```
 
-3. Set up your environment variables (see section [Environment Variables](#environment-variables))
+3. Set up your environment variables (see [Environment Variables](#environment-variables))
 
-4. Run the bot in development mode:
+4. Run the bot:
 
-- **First boot or when changing a command**:
+- **First boot or after changing a command:**
 
 ```bash
 bun run dev --register
 ```
 
-- Normal start:
+- **Normal start:**
 
 ```bash
 bun run dev
@@ -55,37 +53,30 @@ bun run dev
 
 ### Production
 
-For production environments, we recommend using `bun ci` to install only production dependencies:
-
 1. Clone the repository:
 
 ```bash
 git clone https://github.com/Nuit-Bot/Nuit.git
-```
-
-2. CD into the app:
-
-```bash
 cd Nuit
 ```
 
-3. Install dependencies:
+2. Install production dependencies:
 
 ```bash
 bun ci
 ```
 
-3. Set up your environment variables (see section [Environment Variables](#environment-variables))
+3. Set up your environment variables (see [Environment Variables](#environment-variables))
 
-4. Run the bot in production mode:
+4. Run the bot:
 
-- **First boot or when changing a command**:
+- **First boot or after changing a command:**
 
 ```bash
 bun run start --register
 ```
 
-- Normal start:
+- **Normal start:**
 
 ```bash
 bun run start
@@ -93,20 +84,7 @@ bun run start
 
 ## Environment Variables
 
-Put the following environment variables in your `.env` file:
-
-- `DISCORD_TOKEN`: Your Discord bot token from the Discord Developer Portal
-- `DISCORD_CLIENT_ID`: Your Discord bot's client ID
-- `DISCORD_CLIENT_SECRET`: Your Discord application's client secret
-- `BETTER_AUTH_SECRET`: A random secret used by Better Auth to sign cookies and tokens
-- `BETTER_AUTH_URL`: The public base URL for this app
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_KEY`: Your Supabase secret key (MUST BE SECRET KEY, found in Supabase dashboard > Settings > API Keys)
-- `DATABASE_URL`: Your PostgreSQL connection string
-
-They must be formatted like the following:
-
-(Or see [.env.example](./.env.example))
+Create a `.env` file at the root of the project. See [.env.example](./.env.example) for reference.
 
 ```ini
 DISCORD_TOKEN=your-discord-bot-token-here
@@ -116,3 +94,12 @@ BETTER_AUTH_SECRET=your-random-secret-here
 BETTER_AUTH_URL=${base_server_url}
 DATABASE_URL=postgresql://postgres:password@host:5432/postgres
 ```
+
+| Variable | Description |
+|---|---|
+| `DISCORD_TOKEN` | Bot token from the [Discord Developer Portal](https://discord.com/developers/applications) |
+| `DISCORD_CLIENT_ID` | Your bot's client ID |
+| `DISCORD_CLIENT_SECRET` | Your application's client secret |
+| `BETTER_AUTH_SECRET` | Random secret used by Better Auth to sign cookies and tokens |
+| `BETTER_AUTH_URL` | Public base URL for this app |
+| `DATABASE_URL` | PostgreSQL connection string |
