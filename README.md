@@ -2,7 +2,7 @@
 
 <h1>Nuit</h1>
 
-<img src="./assets/nuit.png" width="128" height="128" />
+<img src="./assets/nuit.png" width="128" height="128" alt="Nuit" />
 
 <p>The most customizable Discord bot that pretty much exists.</p>
 
@@ -10,12 +10,16 @@
 
 ## Features
 
-- Modular architecture with dynamic command and event loading
-- Support for slash commands
-- Built with TypeScript for type safety
-- Uses Bun runtime for fast execution
-- Supabase integration for database operations
-- Chalk for colorful console logging
+<table>
+  <tr>
+    <td><img src="./assets/features/modularity.png" /></td>
+    <td><img src="./assets/features/community-driven.png" /></td>
+  </tr>
+  <tr>
+    <td><img src="./assets/features/open-source.png" /></td>
+    <td><img src="./assets/features/bun.png" /></td>
+  </tr>
+</table>
 
 ## Installation
 
