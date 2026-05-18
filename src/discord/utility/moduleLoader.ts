@@ -169,7 +169,12 @@ export async function loadModule(
     }
 }
 
-const getGuildId = (...args: any[]) => args[0]?.guildId ?? null;
+const getGuildId = (...args: any[]) => {
+    const first = args[0];
+    if (!first) return null;
+
+    return first.guildId ?? first.guild?.id ?? first.guild_id ?? null;
+};
 
 async function isGuildAvailable(guildId: string): Promise<boolean> {
     const cached = guildAvailableCache.get(guildId);
