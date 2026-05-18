@@ -15,6 +15,8 @@
     <td><img src="./assets/features/modularity.png" /></td>
     <td><img src="./assets/features/community-driven.png" /></td>
   </tr>
+</table>
+<table>
   <tr>
     <td><img src="./assets/features/open-source.png" /></td>
     <td><img src="./assets/features/bun.png" /></td>
