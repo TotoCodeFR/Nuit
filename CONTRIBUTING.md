@@ -10,7 +10,7 @@ Thank you for considering contributing to Nuit! This document outlines the guide
   - [Development Setup](#development-setup)
   - [Code Style](#code-style)
     - [Naming Conventions](#naming-conventions)
-  - [Adding Commands](#adding-commands)
+  - [Making new Modules](#making-new-modules)
   - [Submitting Changes](#submitting-changes)
   - [Pull Request Guidelines](#pull-request-guidelines)
     - [Pull Request Checklist](#pull-request-checklist)
@@ -21,11 +21,13 @@ Thank you for considering contributing to Nuit! This document outlines the guide
 
 ## Getting Started
 
-Before you begin, please make sure you have:
+Before you begin, please make sure you have the following setup:
 
 - [Bun](https://bun.sh/) runtime installed
-- A Discord bot account with proper permissions
-- Access to a Supabase project for database operations (optional for basic development)
+- Git installed and set up
+- A Discord account with a bot set up
+- Access to a PostgreSQL database
+  - We use Supabase, you can use whatever you want but it's better tested there
 
 ## Development Setup
 
@@ -33,8 +35,8 @@ Before you begin, please make sure you have:
 2. Clone your forked repository:
 
 ```bash
-git clone https://github.com/your-username/nuit.git
-cd nuit
+git clone https://github.com/your-username/Nuit.git
+cd Nuit
 ```
 
 3. Install dependencies:
@@ -43,7 +45,7 @@ cd nuit
 bun install
 ```
 
-4. Create a `.env` file based on the [README.md](README.md#environment-variables) instructions
+4. Create a `.env` file based on the [SELFHOSTING.md](./SELFHOSTING.md#environment-variables) and [.env.example](./.env.example) instructions
 
 5. Run the bot in development mode:
 
@@ -54,114 +56,114 @@ bun run dev
 ## Code Style
 
 - We use TypeScript for type safety
-- Follow consistent formatting using Prettier (if available)
+- Follow consistent formatting using Prettier
 - Use meaningful variable and function names
 - Write clear comments for complex logic
 - Follow the existing code patterns in the project
 
 ### Naming Conventions
 
-- File names: kebab-case (e.g., `my-command.ts`)
+- File names: camelCase (e.g., `myFile.ts`)
 - Variable names: camelCase (e.g., `clientReady`)
 - Constants: UPPER_SNAKE_CASE (e.g., `MAX_MESSAGE_LENGTH`)
 
-## Adding Commands
+## Making new Modules
 
-To add a new slash command:
+> [!NOTE]
+> This applies only to first-party modules. For third-party ones, you can also follow this but use a Git repo instead of step 1 and remove the `nuit` field in step 2.
 
-1. Create a new file in the `src/discord/commands/[category]/` directory
-2. Follow the structure of existing commands as a template
-3. Export a default object with:
-   - `data`: A `SlashCommandBuilder` instance
-   - `execute`: An interaction handler function
+Making a new module is simple:
 
-Example command structure:
+1. Create a new file in the `src/modules/[moduleName]` directory
 
-```typescript
-import { SlashCommandBuilder } from 'discord.js';
+2. Add the following to a `package.json`:
 
-export default {
-    data: new SlashCommandBuilder()
-        .setName('command-name')
-        .setDescription('Description of the command'),
-    async execute(interaction) {
-        // Command logic here
-        await interaction.reply('Command response');
-    },
-};
+```json
+{
+    "name": "@nuit-bot/module-[moduleName]", // the module's name, preferably the one put in the directory from step 1
+    "main": "main.ts", // main entry point relative to `src/modules/[moduleName]`
+    "nuit": {
+        "kind": "" // "internal", "essential", "optional"
+    }
+}
 ```
+
+3. Follow the structure of existing commands as a template
+
+Best example is [the main internal module](./src/modules/main/main.ts)
 
 ## Submitting Changes
 
-1. Create a new branch for your feature or bug fix:
+1. Create a new branch off `main` for your feature or bug fix:
 
 ```bash
-git checkout -b feature/your-feature-name
+git checkout -b feat/your-feature-name
 # or
 git checkout -b fix/issue-description
 ```
 
 2. Make your changes following the code style guidelines
 3. Test your changes thoroughly
-4. Commit your changes with a clear and descriptive commit message:
+4. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
-git add .
-git commit -m "feat: add new command for user management"
+git commit -m "type(scope): short description"
 ```
 
-5. Push your changes to your fork:
+**Types:** `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `perf`  
+**Scopes:** `discord`, `server`, `web`, `modules`, or a specific module name
 
 ```bash
-git push origin feature/your-feature-name
+# Examples
+git commit -m "feat(modules): add welcome message module"
+git commit -m "fix(discord): handle missing guild member intent"
 ```
+
+5. Push your branch and open a PR targeting `main`:
+
+```bash
+git push origin feat/your-feature-name
+```
+
+> Direct commits to `main` are not allowed.
 
 ## Pull Request Guidelines
 
-When submitting a pull request:
-
-- Use a clear and descriptive title
-- Explain the purpose of your changes in the description
+- Use a clear title following the same convention as commits (`type(scope): description`)
+- Explain what changed and why in the description
 - Reference any related issues
-- Ensure all tests pass (if applicable)
-- Keep pull requests focused on a single feature or bug fix
-- Include documentation updates if applicable
-- AI-generated pull requests are allowed and welcomed, but their review might not be prioritized.
-- Please note that we may take longer to review PRs depending on their size. Larger PRs require more time to properly evaluate.
+- Keep PRs focused -- one feature or fix per PR
+- Update docs if your change needs it
+- AI-generated PRs are allowed, but may be deprioritized for review
+- Larger PRs take longer to review -- when possible, split them up
 
 ### Pull Request Checklist
 
 - [ ] Code follows the established style guidelines
 - [ ] Changes are tested and working properly
-- [ ] Commits are clean and descriptive
+- [ ] Commits follow the Conventional Commits format
 - [ ] Documentation has been updated if needed
-- [ ] Breaking changes must be avoided at all costs and, if any, reviewed by a trusted contributor
+- [ ] Breaking changes are clearly flagged and reviewed by a trusted contributor
 
 ## Issues
 
-When creating an issue, please:
-
-- Use a clear and descriptive title
-- Provide a detailed description of the problem
-- Include reproduction steps if reporting a bug
-- Specify your environment (Node.js/Bun version, OS, etc.)
-- Label the issue appropriately if possible
+Before opening an issue, check if it's already been reported.
 
 ### Reporting Bugs
 
-- Check if the issue has already been reported
-- Include steps to reproduce the issue
-- Describe the expected behavior vs. the actual behavior
-- Provide any relevant error messages or logs
+- Use a clear, descriptive title
+- Include steps to reproduce
+- Describe what you expected vs. what actually happened
+- Attach any relevant error messages or logs
+- Specify your environment (Bun version, OS, etc.)
 
 ### Suggesting Features
 
-- Explain the proposed feature clearly
-- Describe the problem the feature solves
-- Provide examples of how the feature could be used
+- Clearly explain the feature and the problem it solves
+- Provide examples of how it would work
 
 ## Questions?
 
-If you have any questions about contributing, feel free to open an issue with your question.
+Open an issue or jump into the Discord server.
 
 Thank you for contributing to Nuit!
