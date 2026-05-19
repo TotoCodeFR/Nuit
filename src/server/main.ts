@@ -24,13 +24,12 @@ app.use(
 
 app.use(express.json());
 
-app.use(express.static(path.join(import.meta.dirname, "..", "web")));
-
 app.listen(process.env.PORT || 3000, async () => {
-    console.log(
-        chalk.green(`[Server] Running on port ${process.env.PORT || 3000}`),
-    );
-
     await import("./discordauth");
     await import("./dashboard");
+
+    app.use(express.static(path.join(__dirname, "../../dist/web")));
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname, "../../dist/web/index.html"));
+    });
 });
