@@ -1,3 +1,35 @@
+@font-face {
+    font-family: "SN Pro Variable";
+    src: url("../fonts/SNPro-Variable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "SN Pro Variable";
+    src: url("../fonts/SNPro-VariableItalic.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Fixel Variable";
+    src: url("../fonts/FixelVariable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Fixel Variable";
+    src: url("../fonts/FixelVariableItalic.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     /* Backgrounds */
     --bg-base: oklch(0.115 0.022 270);
