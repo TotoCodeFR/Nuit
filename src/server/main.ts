@@ -11,11 +11,10 @@ app.use(
             directives: {
                 ...helmet.contentSecurityPolicy.getDefaultDirectives(),
                 "img-src": ["'self'", "data:", "https://cdn.discordapp.com"],
-                "font-src": ["'self'", "https://fonts.gstatic.com"],
+                "font-src": ["'self'"],
                 "style-src": [
                     "'self'",
                     "'unsafe-inline'",
-                    "https://fonts.googleapis.com",
                 ],
             },
         },
