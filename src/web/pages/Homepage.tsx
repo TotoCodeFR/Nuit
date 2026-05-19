@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import "./Homepage.css";
 
 export default function Home() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -114,10 +115,14 @@ export default function Home() {
                     <a href="/auth/discord/login" className="btn-hero primary">
                         Login to Discord
                     </a>
-                    <a>
+                    <a
                         href="https://github.com/Nuit-Bot/Nuit#production"
-                        className="btn-hero secondary" target="_blank"
-                        rel="noreferrer" Self-host yours
+                        className="btn-hero secondary"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        {" "}
+                        Self-host yours
                     </a>
                 </div>
             </div>
