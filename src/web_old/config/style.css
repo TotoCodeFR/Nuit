@@ -1,0 +1,271 @@
+@import url("/vars.css");
+@import url("/fonts.css");
+
+body,
+html,
+main {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    font-family: "Geist";
+}
+
+#loading {
+    transition: backdrop-filter 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+main {
+    min-height: 100%;
+    padding: 32px;
+}
+
+body {
+    min-height: 100vh;
+}
+
+a {
+    color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+.hero {
+    display: grid;
+    gap: 12px;
+    margin: 0 auto 24px;
+    max-width: 1040px;
+}
+
+.back {
+    color: var(--text-secondary);
+    text-decoration: none;
+    width: fit-content;
+}
+
+.back:hover {
+    color: var(--text-primary);
+}
+
+.eyebrow,
+.label,
+.hint,
+.muted {
+    color: var(--text-muted);
+}
+
+.hero h1,
+.form-header h2,
+.group-header h3,
+.field label {
+    color: var(--text-primary);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    max-width: 70ch;
+}
+
+.panel {
+    max-width: 1040px;
+    margin: 0 auto 24px;
+    background: linear-gradient(180deg, var(--bg-surface), var(--bg-elevated));
+    border: 1px solid var(--border-default);
+    border-radius: 20px;
+    box-shadow: 0 18px 50px oklch(0 0 0 / 0.18);
+}
+
+.summary {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    align-items: end;
+    padding: 20px;
+}
+
+.summary-toggle {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+.summary strong,
+.status-message {
+    display: block;
+    margin-top: 6px;
+}
+
+.form-panel {
+    padding: 24px;
+}
+
+.form-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-message {
+    min-height: 20px;
+    color: var(--text-secondary);
+}
+
+button {
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, var(--accent-400), var(--accent-600));
+    color: white;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.field-groups {
+    display: grid;
+    gap: 20px;
+}
+
+.group {
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    padding: 18px;
+    background: oklch(1 0 0 / 0.02);
+}
+
+.group-header {
+    margin-bottom: 14px;
+}
+
+.group-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.field {
+    display: grid;
+    gap: 8px;
+}
+
+.field.full-width {
+    grid-column: 1 / -1;
+}
+
+.field label {
+    font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-overlay);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 14px;
+    padding: 12px 14px;
+    outline: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    border-color: var(--border-accent);
+}
+
+.field textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+}
+
+.field-checkbox input {
+    width: 18px;
+    height: 18px;
+}
+
+.field-badge {
+    display: inline-flex;
+    width: fit-content;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--info-subtle);
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.field-empty {
+    padding: 18px;
+    border-radius: 14px;
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+}
+
+.status-success {
+    color: var(--success);
+}
+
+.status-error {
+    color: var(--danger);
+}
+
+@media (max-width: 800px) {
+    main {
+        padding: 20px;
+    }
+
+    .summary,
+    .group-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-header,
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
