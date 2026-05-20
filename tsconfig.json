@@ -9,7 +9,7 @@
         "module": "Preserve",
         "moduleDetection": "force",
         "jsx": "react-jsx",
-        "allowJs": true,
+        "allowJs": false,
         // Bundler mode
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
@@ -28,6 +28,14 @@
         "types": [
             "bun",
             "vite/client"
-        ]
-    }
+        ],
+        "skipDefaultLibCheck": true
+    },
+    "exclude": [
+        "node_modules",
+        ".git"
+    ],
+    "include": [
+        "src"
+    ]
 }
