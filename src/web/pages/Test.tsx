@@ -9,6 +9,9 @@ export default function StyleTest() {
             <Button variant="primary">Primary</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="danger">Danger</Button>
+            <Button variant="primary" loading={true}>
+                Loading
+            </Button>
         </div>
     );
 }
