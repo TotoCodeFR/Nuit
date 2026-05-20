@@ -42,6 +42,19 @@
     border-color: var(--danger-subtle) 1px solid;
 }
 
+.btn.btn--primary {
+    background-color: var(--accent-600);
+    color: var(--text-primary);
+}
+
+.btn.btn--primary:hover {
+    filter: brightness(110%);
+}
+
+.btn.btn--primary:active {
+    filter: brightness(90%);
+}
+
 .btn.btn--primary .btn__spinner,
 .btn.btn--danger .btn__spinner {
     border-color: var(--text-primary);
@@ -51,6 +64,8 @@
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    filter: none !important;
+    transform: none !important;
 }
 
 .btn__spinner {

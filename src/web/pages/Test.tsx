@@ -12,6 +12,9 @@ export default function StyleTest() {
             <Button variant="primary" loading={true}>
                 Loading
             </Button>
+            <Button variant="primary" disabled={true}>
+                Disabled
+            </Button>
         </div>
     );
 }
