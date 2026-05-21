@@ -3,6 +3,14 @@ import ServerIcon from "../components/ServerIcon";
 import Card from "../components/Card";
 import "../styles/global.css";
 import "./Test.css";
+import {
+    WarningIcon,
+    CheckCircleIcon,
+    XIcon,
+    InfoIcon,
+    LockIcon,
+} from "@phosphor-icons/react";
+import Badge from "../components/Badge";
 
 export default function StyleTest() {
     return (
@@ -27,7 +35,7 @@ export default function StyleTest() {
             <div
                 style={{
                     width: "400px",
-                    height: "300px",
+                    height: "100px",
                     display: "flex",
                     flexDirection: "column",
                 }}
@@ -41,6 +49,33 @@ export default function StyleTest() {
                     <h1>Hello</h1>
                 </Card>
             </div>
+            <h2>Badges</h2>
+            <Badge
+                label="Not installed"
+                variant="warning"
+                icon={<WarningIcon size={12} weight="fill" />}
+            />
+            <Badge
+                label="Bot installed"
+                variant="success"
+                icon={<CheckCircleIcon size={12} weight="fill" />}
+            />
+            <Badge
+                label="Banned"
+                variant="danger"
+                icon={<XIcon size={12} weight="bold" />}
+            />
+            <Badge
+                label="Beta"
+                variant="info"
+                icon={<InfoIcon size={12} weight="fill" />}
+            />
+            <Badge
+                label="Private"
+                variant="default"
+                icon={<LockIcon size={12} weight="fill" />}
+            />
+            <Badge label="Unlisted" variant="default" />
         </div>
     );
 }
