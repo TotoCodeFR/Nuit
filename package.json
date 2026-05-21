@@ -18,6 +18,7 @@
     },
     "dependencies": {
         "@nuit-bot/api": "^0.0.22",
+        "@phosphor-icons/react": "^2.1.10",
         "better-auth": "^1.6.10",
         "chalk": "^5.6.2",
         "discord-api-types": "^0.38.47",
