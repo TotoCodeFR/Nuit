@@ -5,3 +5,10 @@ div {
     flex-direction: column;
     width: fit-content;
 }
+
+.card--row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+}
