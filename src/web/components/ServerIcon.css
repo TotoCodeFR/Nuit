@@ -1,0 +1,23 @@
+.serverIcon {
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.serverIcon > .serverIcon__initials {
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.serverIcon > .serverIcon__img {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
