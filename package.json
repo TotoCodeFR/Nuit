@@ -35,9 +35,9 @@
     "scripts": {
         "dev": "bun --watch .",
         "start": "bun run src/main.ts",
-        "dev:web": "vite",
+        "dev:web": "bun --bun ./node_modules/vite/bin/vite.js",
         "dev:bot": "bun run src/index.ts",
-        "build:web": "vite build",
+        "build:web": "bun --bun ./node_modules/vite/bin/vite.js build",
         "build": "bun run build:web && bun build src/index.ts --outdir dist"
     }
 }
