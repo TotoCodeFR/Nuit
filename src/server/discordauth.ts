@@ -2,9 +2,7 @@ import { app } from "./main.ts";
 import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import { auth } from "../lib/auth";
 
-app.all("/api/auth/{*any}", toNodeHandler(auth));
-
-app.get("/auth/discord/login", async (req, res) => {
+app.get("/api/auth/discord/login", async (req, res) => {
     const result = await auth.api.signInSocial({
         headers: fromNodeHeaders(req.headers),
         returnHeaders: true,
@@ -46,3 +44,5 @@ app.get("/auth/discord/login", async (req, res) => {
 
     return res.status(500).send("Failed to start Discord sign-in");
 });
+
+app.all("/api/auth/{*any}", toNodeHandler(auth));

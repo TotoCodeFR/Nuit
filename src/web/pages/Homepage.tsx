@@ -112,7 +112,10 @@ export default function Home() {
                     rules.
                 </p>
                 <div className="hero-buttons">
-                    <a href="/auth/discord/login" className="btn-hero primary">
+                    <a
+                        href="/api/auth/discord/login"
+                        className="btn-hero primary"
+                    >
                         Login to Discord
                     </a>
                     <a

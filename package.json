@@ -33,11 +33,11 @@
         "toml": "^4.1.1"
     },
     "scripts": {
-        "dev": "bun --watch .",
+        "dev": "bun --watch src/main.ts",
         "start": "bun run src/main.ts",
         "dev:web": "bun --bun ./node_modules/vite/bin/vite.js",
-        "dev:bot": "bun run src/index.ts",
+        "dev:bot": "bun --watch src/discord/main.ts",
         "build:web": "bun --bun ./node_modules/vite/bin/vite.js build",
-        "build": "bun run build:web && bun build src/index.ts --outdir dist"
+        "build": "bun run build:web && bun build src/main.ts --outdir dist"
     }
 }
