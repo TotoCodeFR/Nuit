@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import Button from "../components/Button";
 import Card from "../components/Card";
 import ConfigPanel from "../components/ConfigPanel";
 import ConfirmationDialog from "../components/ConfirmationDialog";
@@ -7,7 +8,7 @@ import Container from "../components/Container";
 import UnsavedChangesIndicator from "../components/UnsavedChangesIndicator";
 import useAuth from "../hooks/useAuth";
 import useModuleConfig from "../hooks/useModuleConfig";
-import { api } from "../lib/api";
+import { AuthError, api } from "../lib/api";
 import type { ModuleConfigResponse, ModuleOverview } from "../lib/configTypes";
 import "./ModuleConfig.css";
 
@@ -34,6 +35,7 @@ export default function ModuleConfig() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [togglingEnabled, setTogglingEnabled] = useState(false);
     const [showDisableDialog, setShowDisableDialog] = useState(false);
 
     const configState = useModuleConfig({
@@ -62,6 +64,10 @@ export default function ModuleConfig() {
             })
             .catch((err: unknown) => {
                 if (!active) return;
+                if (err instanceof AuthError) {
+                    window.location.assign("/login");
+                    return;
+                }
                 setError(
                     err instanceof Error
                         ? err.message
@@ -110,6 +116,10 @@ export default function ModuleConfig() {
             );
             setData(response);
         } catch (err: unknown) {
+            if (err instanceof AuthError) {
+                window.location.assign("/login");
+                return;
+            }
             setError(
                 err instanceof Error ? err.message : "Failed to save module config",
             );
@@ -130,31 +140,57 @@ export default function ModuleConfig() {
             return;
         }
 
-        const result = await api.toggleModuleEnabled(
-            resolvedGuildId,
-            data.module,
-            nextEnabled,
-        );
-        setData({
-            ...data,
-            enabled: result.enabled,
-            updatedAt: result.updatedAt,
-        });
+        setTogglingEnabled(true);
+        try {
+            const result = await api.toggleModuleEnabled(
+                resolvedGuildId,
+                data.module,
+                nextEnabled,
+            );
+            setData({
+                ...data,
+                enabled: result.enabled,
+                updatedAt: result.updatedAt,
+            });
+        } catch (err: unknown) {
+            if (err instanceof AuthError) {
+                window.location.assign("/login");
+                return;
+            }
+            setError(
+                err instanceof Error ? err.message : "Failed to update module status",
+            );
+        } finally {
+            setTogglingEnabled(false);
+        }
     }
 
     async function confirmDisableEssential() {
         if (!data) return;
-        const result = await api.toggleModuleEnabled(
-            resolvedGuildId,
-            data.module,
-            false,
-        );
-        setData({
-            ...data,
-            enabled: result.enabled,
-            updatedAt: result.updatedAt,
-        });
-        setShowDisableDialog(false);
+        setTogglingEnabled(true);
+        try {
+            const result = await api.toggleModuleEnabled(
+                resolvedGuildId,
+                data.module,
+                false,
+            );
+            setData({
+                ...data,
+                enabled: result.enabled,
+                updatedAt: result.updatedAt,
+            });
+            setShowDisableDialog(false);
+        } catch (err: unknown) {
+            if (err instanceof AuthError) {
+                window.location.assign("/login");
+                return;
+            }
+            setError(
+                err instanceof Error ? err.message : "Failed to update module status",
+            );
+        } finally {
+            setTogglingEnabled(false);
+        }
     }
 
     if (!authLoading && !user) {
@@ -201,13 +237,13 @@ export default function ModuleConfig() {
                                 <strong>{formatDate(data.updatedAt)}</strong>
                             </Card>
                             <Card level={2} className="moduleConfigStatusToggle">
-                                <button
-                                    type="button"
+                                <Button
+                                    variant={data.enabled ? "danger" : "primary"}
+                                    loading={togglingEnabled}
                                     onClick={() => onToggleEnabled(!data.enabled)}
-                                    className="moduleConfigToggleButton"
                                 >
                                     {data.enabled ? "Disable" : "Enable"}
-                                </button>
+                                </Button>
                             </Card>
                         </section>
 
