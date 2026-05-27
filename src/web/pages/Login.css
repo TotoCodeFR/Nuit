@@ -1,5 +1,5 @@
 .loginPage {
-    min-height: 100vh;
+    min-height: calc(100dvh - 48px);
     display: grid;
     place-items: center;
 }
@@ -23,4 +23,10 @@
 .loginCard__action {
     text-decoration: none;
     width: fit-content;
+}
+
+@media (max-width: 800px) {
+    .loginPage {
+        min-height: calc(100dvh - 32px);
+    }
 }
