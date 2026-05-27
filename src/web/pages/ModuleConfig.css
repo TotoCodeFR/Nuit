@@ -2,6 +2,12 @@
     min-height: 100vh;
 }
 
+.moduleConfigTopbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+}
+
 .moduleConfigHeader {
     display: grid;
     gap: 8px;
