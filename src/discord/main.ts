@@ -9,6 +9,7 @@ import { resolveExternalModules, syncExternalModules, getInstalledModuleDirs } f
 import { cleanMultiline } from "./utility/cleanMultiline";
 import { join } from "node:path";
 import config from "../utility/config";
+import { getProjectRoot } from "../utility/projectRoot";
 import chalk from "chalk";
 
 export const client = new Client({
@@ -34,8 +35,9 @@ if (config.host.allow_external_modules) {
             ${chalk.green("Fix")}: Install Git and make sure it is available in your PATH.`),
         );
     } else {
-        const registryModulesPath = join(import.meta.dirname, "..", "..", "registry-modules");
-        const lockPath = join(import.meta.dirname, "..", "..", "registry.lock");
+        const root = getProjectRoot();
+        const registryModulesPath = join(root, "registry-modules");
+        const lockPath = join(root, "registry.lock");
 
         const externalModules = await resolveExternalModules(config.registries);
         await syncExternalModules(externalModules, registryModulesPath, lockPath);
@@ -47,7 +49,7 @@ if (config.host.allow_external_modules) {
     }
 }
 
-await scanModules(join(import.meta.dirname, "..", "modules"));
+await scanModules(join(getProjectRoot(), "src", "modules"));
 await setupCommandsAndEvents();
 if (process.argv.includes("--register")) {
     await pushCommandsToDiscord(globalRegistry.commands);
