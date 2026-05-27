@@ -6,7 +6,9 @@ import ConfigPanel from "../components/ConfigPanel";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 import Container from "../components/Container";
 import UnsavedChangesIndicator from "../components/UnsavedChangesIndicator";
+import UserMenu from "../components/UserMenu";
 import useAuth from "../hooks/useAuth";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import useModuleConfig from "../hooks/useModuleConfig";
 import { AuthError, api } from "../lib/api";
 import type { ModuleConfigResponse, ModuleOverview } from "../lib/configTypes";
@@ -37,6 +39,12 @@ export default function ModuleConfig() {
     const [saving, setSaving] = useState(false);
     const [togglingEnabled, setTogglingEnabled] = useState(false);
     const [showDisableDialog, setShowDisableDialog] = useState(false);
+
+    useDocumentTitle(
+        moduleMeta?.name
+            ? `${moduleMeta.name} config - Nuit`
+            : "Module config - Nuit",
+    );
 
     const configState = useModuleConfig({
         initialConfig: data?.config ?? {},
@@ -204,6 +212,11 @@ export default function ModuleConfig() {
     return (
         <main className="moduleConfigPage">
             <Container size="lg">
+                {user ? (
+                    <div className="moduleConfigTopbar">
+                        <UserMenu user={user} />
+                    </div>
+                ) : null}
                 <section className="moduleConfigHeader">
                     <Link
                         className="moduleConfigBack"

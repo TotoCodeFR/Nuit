@@ -3,7 +3,9 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import Card from "../components/Card";
 import Container from "../components/Container";
 import ModuleList from "../components/ModuleList";
+import UserMenu from "../components/UserMenu";
 import useAuth from "../hooks/useAuth";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import useGuild from "../hooks/useGuild";
 import { api } from "../lib/api";
 import "./GuildSettings.css";
@@ -15,6 +17,11 @@ export default function GuildSettings() {
 
     const { user, loading: authLoading } = useAuth();
     const { guild, modules, loading, error, refetch } = useGuild(guildId);
+
+    useDocumentTitle(
+        guild?.name ? `${guild.name} - Nuit` : "Guild overview - Nuit",
+    );
+
     const [togglingModuleId, setTogglingModuleId] = useState<string | undefined>(
         undefined,
     );
@@ -49,6 +56,11 @@ export default function GuildSettings() {
     return (
         <main className="guildSettingsPage">
             <Container size="lg">
+                {user ? (
+                    <div className="guildSettingsTopbar">
+                        <UserMenu user={user} />
+                    </div>
+                ) : null}
                 <section className="guildSettingsHeader">
                     <Link to="/dashboard" className="guildSettingsBack">
                         Back to dashboard

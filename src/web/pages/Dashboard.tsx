@@ -3,11 +3,15 @@ import { Link, Navigate } from "react-router-dom";
 import Card from "../components/Card";
 import Container from "../components/Container";
 import ServerIcon from "../components/ServerIcon";
+import UserMenu from "../components/UserMenu";
 import useAuth from "../hooks/useAuth";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { AuthError, api, type MutualGuild } from "../lib/api";
 import "./Dashboard.css";
 
 export default function Dashboard() {
+    useDocumentTitle("Your servers - Nuit");
+
     const { user, loading: authLoading } = useAuth();
     const [guilds, setGuilds] = useState<MutualGuild[]>([]);
     const [loading, setLoading] = useState(true);
@@ -51,6 +55,11 @@ export default function Dashboard() {
     return (
         <main className="dashboardPage">
             <Container size="lg">
+                {user ? (
+                    <div className="dashboardTopbar">
+                        <UserMenu user={user} />
+                    </div>
+                ) : null}
                 <section className="dashboardHeader">
                     <h1>Your servers</h1>
                     <p>

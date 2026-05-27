@@ -3,9 +3,12 @@ import Button from "../components/Button";
 import Card from "../components/Card";
 import Container from "../components/Container";
 import useAuth from "../hooks/useAuth";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import "./Login.css";
 
 export default function Login() {
+    useDocumentTitle("Login - Nuit");
+
     const { user, loading } = useAuth();
 
     if (loading) {

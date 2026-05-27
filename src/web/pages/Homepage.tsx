@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import "./Homepage.css";
 
 export default function Home() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useDocumentTitle("Nuit");
 
     useEffect(() => {
         const canvas = canvasRef.current;

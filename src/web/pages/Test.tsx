@@ -20,6 +20,7 @@ import Textarea from "../components/Textarea";
 import Toggle from "../components/Toggle";
 import UnsavedChangesIndicator from "../components/UnsavedChangesIndicator";
 import type { ModuleConfigField, ModuleOverview } from "../lib/configTypes";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import "../styles/global.css";
 import "./Test.css";
 import {
@@ -31,6 +32,8 @@ import {
 } from "@phosphor-icons/react";
 
 export default function StyleTest() {
+    useDocumentTitle("Style test - Nuit");
+
     const [inputValue, setInputValue] = useState("hello");
     const [selectValue, setSelectValue] = useState("optional");
     const [textareaValue, setTextareaValue] = useState("Welcome {{displayName}}!");
