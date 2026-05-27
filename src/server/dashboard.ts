@@ -2,7 +2,6 @@ import type { NextFunction, Request, Response } from "express";
 import { app } from "./main";
 import { fromNodeHeaders } from "better-auth/node";
 import type { Json } from "@nuit-bot/api";
-import path from "node:path";
 import { PermissionsBitField } from "discord.js";
 import { auth } from "../lib/auth";
 import { client } from "../discord/main";
@@ -24,7 +23,7 @@ export interface DiscordRESTGuild {
     features: string[];
 }
 
-export const mutualGuildsCache = new TtlCache<string, []>(90_000);
+export const mutualGuildsCache = new TtlCache<string, DiscordRESTGuild[]>(90_000);
 export const guildCache = new TtlCache<string, object>(90_000);
 
 interface DashboardAuthUser {
@@ -128,7 +127,7 @@ async function getGuildModulesOverview(guildId: string) {
 }
 
 export async function getMutualGuilds(providerToken: string, userId: string) {
-    let guilds;
+    let guilds: DiscordRESTGuild[];
 
     if (!mutualGuildsCache.get(userId)) {
         const response = await fetch(
@@ -138,10 +137,22 @@ export async function getMutualGuilds(providerToken: string, userId: string) {
             },
         );
 
-        guilds = await response.json();
+        if (!response.ok) {
+            throw new Error(
+                `Discord guild fetch failed with status ${String(response.status)}`,
+            );
+        }
+
+        const payload = await response.json();
+
+        if (!Array.isArray(payload)) {
+            throw new Error("Discord guild fetch returned an unexpected payload");
+        }
+
+        guilds = payload as DiscordRESTGuild[];
         mutualGuildsCache.set(userId, guilds);
     } else {
-        guilds = mutualGuildsCache.get(userId);
+        guilds = mutualGuildsCache.get(userId) as DiscordRESTGuild[];
     }
 
     const botGuildIds = new Set(client.guilds.cache.keys());
@@ -219,18 +230,6 @@ export async function hasAccess(
         return res.redirect("/dashboard");
     }
 }
-
-app.get("/dashboard/:guildId/overview", requireAuth, hasAccess, (req, res) => {
-    res.sendFile(
-        path.join(import.meta.dirname, "..", "web", "overview", "index.html"),
-    );
-});
-
-app.get("/dashboard/:guildId/:module", requireAuth, hasAccess, (req, res) => {
-    res.sendFile(
-        path.join(import.meta.dirname, "..", "web", "config", "index.html"),
-    );
-});
 
 app.get(
     "/api/guild/:guildId/:module/config",
