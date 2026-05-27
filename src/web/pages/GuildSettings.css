@@ -1,0 +1,74 @@
+.guildSettingsPage {
+    min-height: 100vh;
+}
+
+.guildSettingsHeader {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.guildSettingsBack {
+    color: var(--text-secondary);
+    text-decoration: none;
+    width: fit-content;
+}
+
+.guildSettingsBack:hover {
+    color: var(--text-primary);
+}
+
+.guildSettingsEyebrow {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.guildSettingsMeta {
+    color: var(--text-secondary);
+}
+
+.guildSettingsStats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.guildSettingsStats .card {
+    display: grid;
+    gap: 6px;
+}
+
+.guildSettingsStats p {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.guildSettingsStats strong {
+    font-size: 24px;
+}
+
+.guildSettingsModuleArea {
+    display: grid;
+    gap: 10px;
+}
+
+.guildSettingsModuleTitle p {
+    color: var(--text-secondary);
+}
+
+.guildSettingsError {
+    color: var(--danger);
+}
+
+@media (max-width: 900px) {
+    .guildSettingsStats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .guildSettingsStats {
+        grid-template-columns: 1fr;
+    }
+}
