@@ -18,20 +18,16 @@
 
 .badge--success {
     background-color: var(--success-subtle);
-    border: 1px solid var(--success);
 }
 
 .badge--warning {
     background-color: var(--warning-subtle);
-    border: 1px solid var(--warning);
 }
 
 .badge--danger {
     background-color: var(--danger-subtle);
-    border: 1px solid var(--danger);
 }
 
 .badge--info {
     background-color: var(--info-subtle);
-    border: 1px solid var(--info);
 }
