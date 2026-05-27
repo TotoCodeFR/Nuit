@@ -1,0 +1,26 @@
+.loginPage {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+}
+
+.loginCard {
+    display: grid;
+    gap: 12px;
+}
+
+.loginCard__eyebrow {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.loginCard__text {
+    color: var(--text-secondary);
+}
+
+.loginCard__action {
+    text-decoration: none;
+    width: fit-content;
+}
