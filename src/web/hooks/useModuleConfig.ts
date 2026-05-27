@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ModuleConfigField } from "../lib/configTypes";
 
 type ConfigValue = string | number | boolean;
+
+const DISCORD_SNOWFLAKE_REGEX = /^\d{17,20}$/;
 
 type UseModuleConfigState = {
     initialConfig: Record<string, ConfigValue>;
@@ -42,6 +44,11 @@ export default function useModuleConfig(state: UseModuleConfigState) {
         [values, state.initialConfig],
     );
 
+    useEffect(() => {
+        setValues(state.initialConfig);
+        setValidationErrors({});
+    }, [state.initialConfig, state.schema]);
+
     function onChange(key: string, value: ConfigValue) {
         setValues((previous) => ({
             ...previous,
@@ -73,6 +80,17 @@ export default function useModuleConfig(state: UseModuleConfigState) {
 
                 if ("max" in field && typeof field.max === "number" && value.length > field.max) {
                     nextErrors[field.key] = `Must be at most ${String(field.max)} characters.`;
+                }
+
+                if (
+                    (field.type === "channel" ||
+                        field.type === "role" ||
+                        field.type === "user") &&
+                    value !== "" &&
+                    !DISCORD_SNOWFLAKE_REGEX.test(value)
+                ) {
+                    nextErrors[field.key] =
+                        "Expected a valid Discord ID (17-20 digits).";
                 }
             }
 

@@ -46,7 +46,7 @@ function renderField(
     const id = `field-${field.key}`;
 
     const maybeFeedback = feedback ? (
-        <FieldLevelFeedback type="warning" message={feedback} />
+        <FieldLevelFeedback type="info" message={feedback} />
     ) : null;
 
     if (field.type === "boolean") {
