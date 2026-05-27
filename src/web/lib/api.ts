@@ -100,6 +100,19 @@ export const api = {
             },
         );
     },
+    async logout() {
+        const response = await fetch("/api/auth/sign-out", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Logout failed (${response.status})`);
+        }
+    },
 };
 
 export { AuthError };
