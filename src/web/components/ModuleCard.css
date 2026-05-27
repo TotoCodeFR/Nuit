@@ -1,0 +1,60 @@
+.moduleCard {
+    display: grid;
+    gap: 14px;
+}
+
+.moduleCard__top {
+    display: grid;
+    gap: 4px;
+}
+
+.moduleCard__nameRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.moduleCard__nameRow h3 {
+    font-size: 17px;
+}
+
+.moduleCard__id {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.moduleCard__facts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.moduleCard__facts span {
+    border: 1px solid var(--border-subtle);
+    background: oklch(1 0 0 / 0.02);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 12px;
+}
+
+.moduleCard__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.moduleCard__buttonContent {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 800px) {
+    .moduleCard__bottom {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

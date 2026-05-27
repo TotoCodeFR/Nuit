@@ -1,0 +1,32 @@
+.loginPage {
+    min-height: calc(100dvh - 48px);
+    display: grid;
+    place-items: center;
+}
+
+.loginCard {
+    display: grid;
+    gap: 12px;
+}
+
+.loginCard__eyebrow {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.loginCard__text {
+    color: var(--text-secondary);
+}
+
+.loginCard__action {
+    text-decoration: none;
+    width: fit-content;
+}
+
+@media (max-width: 800px) {
+    .loginPage {
+        min-height: calc(100dvh - 32px);
+    }
+}
