@@ -4,7 +4,7 @@ import Card from "../components/Card";
 import Container from "../components/Container";
 import ServerIcon from "../components/ServerIcon";
 import useAuth from "../hooks/useAuth";
-import { api, type MutualGuild } from "../lib/api";
+import { AuthError, api, type MutualGuild } from "../lib/api";
 import "./Dashboard.css";
 
 export default function Dashboard() {
@@ -24,6 +24,10 @@ export default function Dashboard() {
             })
             .catch((err: unknown) => {
                 if (!active) return;
+                if (err instanceof AuthError) {
+                    window.location.assign("/login");
+                    return;
+                }
                 setError(
                     err instanceof Error
                         ? err.message

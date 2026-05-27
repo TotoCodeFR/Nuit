@@ -22,10 +22,22 @@ type MutualGuild = {
 type GuildResponse = {
     id: string;
     name: string;
-    iconURL?: () => string | null;
+    iconURL?: string | null;
     memberCount?: number;
     locale?: string;
 };
+
+class AuthError extends Error {
+    constructor() {
+        super("Not authenticated");
+        this.name = "AuthError";
+    }
+}
+
+function isJsonResponse(response: Response) {
+    const contentType = response.headers.get("content-type");
+    return typeof contentType === "string" && contentType.includes("application/json");
+}
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
     const response = await fetch(url, {
@@ -36,6 +48,10 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
             ...(init?.headers ?? {}),
         },
     });
+
+    if (response.status === 401 || response.redirected || !isJsonResponse(response)) {
+        throw new AuthError();
+    }
 
     if (!response.ok) {
         throw new Error(`Request failed (${response.status}) for ${url}`);
@@ -86,4 +102,5 @@ export const api = {
     },
 };
 
+export { AuthError };
 export type { CurrentUser, MutualGuild, GuildResponse };

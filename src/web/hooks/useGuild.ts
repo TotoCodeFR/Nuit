@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type GuildResponse } from "../lib/api";
+import { AuthError, api, type GuildResponse } from "../lib/api";
 import type { ModuleOverview } from "../lib/configTypes";
 
 type UseGuildState = {
@@ -37,6 +37,10 @@ export default function useGuild(guildId: string): UseGuildState {
             setGuild(nextGuild);
             setModules(nextModules);
         } catch (err: unknown) {
+            if (err instanceof AuthError) {
+                window.location.assign("/login");
+                return;
+            }
             setError(err instanceof Error ? err.message : "Failed to load guild");
         } finally {
             setLoading(false);

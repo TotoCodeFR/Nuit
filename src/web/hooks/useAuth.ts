@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type CurrentUser } from "../lib/api";
+import { AuthError, api, type CurrentUser } from "../lib/api";
 
 export default function useAuth() {
     const [user, setUser] = useState<CurrentUser | null>(null);
@@ -16,6 +16,11 @@ export default function useAuth() {
             })
             .catch((err: unknown) => {
                 if (!active) return;
+                if (err instanceof AuthError) {
+                    setUser(null);
+                    setError(null);
+                    return;
+                }
                 setError(err instanceof Error ? err.message : "Unknown auth error");
             })
             .finally(() => {
