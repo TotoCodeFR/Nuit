@@ -17,6 +17,14 @@ export default function useGuild(guildId: string): UseGuildState {
     const [error, setError] = useState<string | null>(null);
 
     async function load() {
+        if (!guildId) {
+            setGuild(null);
+            setModules([]);
+            setLoading(false);
+            setError("Missing guild ID");
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
