@@ -37,7 +37,24 @@ bun install
 
 3. Set up your environment variables (see [Environment Variables](#environment-variables))
 
-4. Run the bot:
+4. Make the database migrations:
+
+```bash
+# Better Auth migrations
+bun x auth migrate
+
+# Drizzle ORM schema migrations
+bun x drizzle-kit generate
+bun x drizzle-kit migrate
+```
+
+5. Run the web server (separately)
+
+```bash
+bun run dev:web
+```
+
+6. Run the bot:
 
 - **First boot or after changing a command:**
 
@@ -68,7 +85,24 @@ bun ci
 
 3. Set up your environment variables (see [Environment Variables](#environment-variables))
 
-4. Run the bot:
+4. Build the source code:
+
+```bash
+bun run build # not bun build!
+```
+
+5. Make the database migrations:
+
+```bash
+# Better Auth migrations
+bun x auth migrate
+
+# Drizzle ORM schema migrations
+bun x drizzle-kit generate
+bun x drizzle-kit migrate
+```
+
+6. Run the bot:
 
 - **First boot or after changing a command:**
 

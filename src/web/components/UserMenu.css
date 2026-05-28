@@ -1,0 +1,43 @@
+.userMenu {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    background: var(--bg-surface);
+    padding: 6px;
+}
+
+.userMenu__identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 6px;
+}
+
+.userMenu__avatar,
+.userMenu__fallbackAvatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+}
+
+.userMenu__avatar {
+    object-fit: cover;
+    border: 1px solid var(--border-default);
+}
+
+.userMenu__fallbackAvatar {
+    display: grid;
+    place-items: center;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.userMenu__name {
+    color: var(--text-secondary);
+    font-size: 13px;
+}

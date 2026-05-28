@@ -31,27 +31,7 @@ Before you begin, please make sure you have the following setup:
 
 ## Development Setup
 
-1. Fork the repository
-2. Clone your forked repository:
-
-```bash
-git clone https://github.com/your-username/Nuit.git
-cd Nuit
-```
-
-3. Install dependencies:
-
-```bash
-bun install
-```
-
-4. Create a `.env` file based on the [SELFHOSTING.md](./SELFHOSTING.md#environment-variables) and [.env.example](./.env.example) instructions
-
-5. Run the bot in development mode:
-
-```bash
-bun run dev
-```
+Follow [SELFHOSTING.md](./SELFHOSTING.md)
 
 ## Code Style
 

@@ -7,7 +7,7 @@ export const auth = betterAuth({
     database: pool,
     baseURL,
     emailAndPassword: { enabled: false },
-    trustedOrigins: baseURL ? [baseURL] : undefined,
+    trustedOrigins: [baseURL, "http://localhost:3000"].filter(Boolean) as string[],
     socialProviders: {
         discord: {
             clientId: process.env.DISCORD_CLIENT_ID as string,
