@@ -37,7 +37,13 @@ bun install
 
 3. Set up your environment variables (see [Environment Variables](#environment-variables))
 
-4. Run the bot:
+4. Run the web server (separately)
+
+```bash
+bun run dev:web
+```
+
+5. Run the bot:
 
 - **First boot or after changing a command:**
 
@@ -68,7 +74,13 @@ bun ci
 
 3. Set up your environment variables (see [Environment Variables](#environment-variables))
 
-4. Run the bot:
+4. Build the source code:
+
+```bash
+bun run build # not bun build!
+```
+
+5. Run the bot:
 
 - **First boot or after changing a command:**
 
