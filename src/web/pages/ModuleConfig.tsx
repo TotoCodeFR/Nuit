@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import Button from "../components/Button";
-import Card from "../components/Card";
-import ConfigPanel from "../components/ConfigPanel";
-import ConfirmationDialog from "../components/ConfirmationDialog";
-import Container from "../components/Container";
-import UnsavedChangesIndicator from "../components/UnsavedChangesIndicator";
+import {
+    Button, Card, ConfigPanel, ConfirmationDialog,
+    Container, UnsavedChangesIndicator,
+} from "@nuit-bot/components";
+import { useModuleConfig } from "@nuit-bot/components";
+import type { ModuleConfigResponse, ModuleOverview } from "@nuit-bot/components";
 import UserMenu from "../components/UserMenu";
 import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import useModuleConfig from "../hooks/useModuleConfig";
 import { AuthError, api } from "../lib/api";
-import type { ModuleConfigResponse, ModuleOverview } from "../lib/configTypes";
 import "./ModuleConfig.css";
 
 function formatDate(value: string | null) {
